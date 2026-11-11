@@ -1,0 +1,38 @@
+[
+  {
+    "title": "WHO AWaRe Classification of Antibiotics 2023",
+    "description": "Access, Watch, Reserve and Not recommended lists with ATC codes (Web Annex C of the WHO Essential Medicines List 2023).",
+    "file": "WHO-AWaRe-Classification-2023.xlsx",
+    "type": "xlsx"
+  },
+  {
+    "title": "WHO AWaRe Antibiotic Book: Guidelines on Antibiotic Use",
+    "description": "Infographic annex with first and second choice antibiotics, doses and durations for common infections.",
+    "file": "WHO-AWaRe-Antibiotic-Book-Infographics.pdf",
+    "type": "pdf"
+  },
+  {
+    "title": "WHO Practical Toolkit: Antimicrobial Stewardship Programmes",
+    "description": "Setting up and running stewardship programmes in health-care facilities in low- and middle-income countries.",
+    "file": "WHO-Antimicrobial-Stewardship-Practical-Toolkit.pdf",
+    "type": "pdf"
+  },
+  {
+    "title": "Standard Treatment Guidelines on Antibiotic Use in Common Infectious Diseases of Bangladesh",
+    "description": "DGHS, version 1.0, December 2021. Adult and child regimens by condition, Annex 2 AWaRe lists.",
+    "file": "STG-Antibiotic-Use-Bangladesh-2021.pdf",
+    "type": "pdf"
+  },
+  {
+    "title": "National Antimicrobial Resistance (AMR) Surveillance Report, Bangladesh 2016-2023",
+    "description": "IEDCR report on resistance patterns and antibiotic-use trends across sentinel sites.",
+    "file": "National-AMR-Surveillance-Report-Bangladesh-2016-2023.pdf",
+    "type": "pdf"
+  },
+  {
+    "title": "The selection and use of essential medicines 2023 (Web Annex C), WHO",
+    "description": "WHO publication page for the 2023 Essential Medicines List annex that carries the AWaRe classification.",
+    "url": "https://www.who.int/publications/i/item/WHO-MHP-HPS-EML-2023.04",
+    "type": "link"
+  }
+]

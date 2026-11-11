@@ -4,3 +4,6 @@ data/*.sqlite-wal
 data/*.sqlite-shm
 .DS_Store
 Thumbs.db
+public/uploads/*/*
+!public/uploads/.gitkeep
+!public/uploads/.htaccess

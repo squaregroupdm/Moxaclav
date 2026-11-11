@@ -15,7 +15,16 @@ app_js = (ROOT / "public/assets/app.js").read_text(encoding="utf-8")
 local_js = (ROOT / "demo/api-local.js").read_text(encoding="utf-8")
 questions = json.loads((ROOT / "seed/questions.json").read_text(encoding="utf-8"))
 institutions = json.loads((ROOT / "seed/institutions.json").read_text(encoding="utf-8"))
-seed_js = "window.BOI_SEED_QUESTIONS = " + json.dumps(questions, ensure_ascii=False).replace("</", "<\\/") + ";" + "window.BOI_SEED_INSTITUTIONS = " + json.dumps(institutions, ensure_ascii=False) + ";"
+materials = json.loads((ROOT / "seed/materials.json").read_text(encoding="utf-8"))
+for m in materials:
+    f = ROOT / "public/materials" / m["file"] if "file" in m else None
+    if f and f.is_file():
+        m["size"] = f.stat().st_size
+ASSET_BASE = "https://squaregroupdm.github.io/BattleofInterns/public/"
+seed_js = ("window.BOI_ASSET_BASE = " + json.dumps(ASSET_BASE) + ";"
+           + "window.BOI_SEED_QUESTIONS = " + json.dumps(questions, ensure_ascii=False).replace("</", "<\\/") + ";"
+           + "window.BOI_SEED_INSTITUTIONS = " + json.dumps(institutions, ensure_ascii=False) + ";"
+           + "window.BOI_SEED_MATERIALS = " + json.dumps(materials, ensure_ascii=False).replace("</", "<\\/") + ";")
 
 FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Figtree:wght@400;500;600&display=swap">'
 

@@ -20,7 +20,7 @@ return [
     'grace_seconds' => 20,
 
     // Seed questions loaded on first run (relative to this file).
-    'seed_file' => __DIR__ . '/../../seed/questions.json',
+    'seed_file' => __DIR__ . '/../../seed/questions.json', // institutions.json and materials.json are read from the same folder
 
     // Allowed origins for cross-site calls. Leave empty when the quiz page and the API are on the same domain.
     'cors_origins' => [],
