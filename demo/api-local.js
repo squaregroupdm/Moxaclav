@@ -2,17 +2,17 @@
    localStorage. Used only for the standalone demo page. Nothing is sent anywhere. */
 window.BOI_API = (function () {
   "use strict";
-  const KEY = "boi_demo_v3";
+  const KEY = "boi_demo_v4";
   const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   const delay = (v) => new Promise((r) => setTimeout(() => r(v), 120));
   const fail = (m) => { throw new Error(m); };
   const norm = (s) => String(s || "").trim();
-  const normBmdc = (s) => norm(s).toUpperCase().replace(/\s+/g, "").replace(/^([A-Z]+)-?(\d+)$/, "$1-$2");
+  const normBmdc = (s) => norm(s).toUpperCase().replace(/\s+/g, " ").slice(0, 40);
   const normPhone = (s) => norm(s).replace(/[^\d+]/g, "").replace(/^\+?88/, "");
   const DEFAULT_TERMS = "1. Participation is open exclusively to medical doctors currently serving as interns in recognized medical colleges or hospitals in Bangladesh.\n2. Each participant can register and participate only once.\n3. The quiz must be completed within the stipulated time using a personal internet-enabled device.\n4. Winners will be selected based on scores and completion time. The organizer's decision will be final.\n5. The organizer reserves the right to disqualify participants for unfair practices and modify or cancel the campaign if necessary.";
   const defaultSettings = () => ({ campaignName: "Battle of Interns", sponsor: "Moxaclav", durationSec: 600, questionCount: 25, shuffle: true, leaderboardPublic: true, showExplanations: true, registrationOpen: true,
     quizMode: "manual", quizOpen: true, quizStartAt: null, quizEndAt: null,
-    splashImage: "", splashHeadline: "Battle of Interns", splashSub: "An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.",
+    splashIcon: "", splashHeadline: "Battle of Interns", splashSub: "An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.",
     bannerTop: { enabled: false, image: "", link: "" }, bannerPopup: { enabled: false, image: "", link: "", seconds: 10 }, terms: DEFAULT_TERMS });
   const seedMaterials = () => (window.BOI_SEED_MATERIALS || []).map((m, i) => ({ id: "m" + (i + 1), title: m.title, description: m.description || "", url: m.url || ((window.BOI_ASSET_BASE || "") + "materials/" + m.file), type: m.type || "link", size: m.size || null, visible: true, createdAt: Date.now() }));
 
@@ -23,7 +23,7 @@ window.BOI_API = (function () {
     const samples = [["Dr. Tanvir Ahmed", "Dhaka Medical College, Dhaka", 23, 412], ["Dr. Nusrat Jahan", "Sir Salimullah Medical College, Dhaka", 22, 388], ["Dr. Rafiul Islam", "Chittagong Medical College, Chattogram", 22, 455], ["Dr. Farhana Haque", "Mymensingh Medical College, Mymensingh", 20, 501], ["Dr. Sabbir Hossain", "Rajshahi Medical College, Rajshahi", 18, 530], ["Dr. Mehzabin Chowdhury", "Sylhet MAG Osmani Medical College, Sylhet", 15, 572]];
     samples.forEach(([name, inst, score, secs], i) => {
       const pid = "sample" + i, now = Date.now() - (i + 1) * 3600 * 1000;
-      db.participants.push({ id: pid, token: "t_" + pid, name, email: "sample" + (i + 1) + "@example.com", bmdc: "A-" + (100001 + i), phone: "017000000" + (10 + i), institution: inst, password: "sample123", registeredAt: now, lastLoginAt: now });
+      const ph = "017000000" + (10 + i); db.participants.push({ id: pid, token: "t_" + pid, name, email: "sample" + (i + 1) + "@example.com", bmdc: "A-" + (100001 + i), phone: ph, institution: inst, birthDay: "15", password: "15" + ph.slice(-4), registeredAt: now, lastLoginAt: now });
       const order = questions.map((q) => q.id).slice(0, db.settings.questionCount);
       const answers = {}; let wrongLeft = order.length - score;
       order.forEach((qid) => { const q = questions.find((x) => x.id === qid); if (wrongLeft > 0 && Math.random() < 0.35) { answers[qid] = ["A", "B", "C", "D"].find((k) => k !== q.correct); wrongLeft--; } else answers[qid] = q.correct; });
@@ -50,7 +50,7 @@ window.BOI_API = (function () {
   function publicSettings(db) {
     const s = db.settings; const ac = db.questions.filter((q) => q.active).length;
     return { campaignName: s.campaignName, sponsor: s.sponsor, durationSec: s.durationSec, questionCount: ac ? Math.min(s.questionCount, ac) : s.questionCount, leaderboardPublic: s.leaderboardPublic, showExplanations: s.showExplanations !== false, registrationOpen: s.registrationOpen !== false,
-      quiz: Object.assign(quizState(s), { serverNow: Date.now() }), splash: { image: s.splashImage || "", headline: s.splashHeadline, sub: s.splashSub }, banners: { top: s.bannerTop, popup: s.bannerPopup }, terms: s.terms || DEFAULT_TERMS, institutions: sortedInst(db.institutions || []), demo: true };
+      quiz: Object.assign(quizState(s), { serverNow: Date.now() }), splash: { icon: s.splashIcon || "", headline: s.splashHeadline, sub: s.splashSub }, banners: { top: s.bannerTop, popup: s.bannerPopup }, terms: s.terms || DEFAULT_TERMS, institutions: sortedInst(db.institutions || []), demo: true };
   }
   function scoreAttempt(db, a) {
     let correct = 0, wrong = 0, skipped = 0;
@@ -72,7 +72,7 @@ window.BOI_API = (function () {
   const csvCell = (v) => { const s = String(v ?? ""); if (s.startsWith('="')) return s; return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const csv = (rows) => rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
   const csvPhone = (p) => '="' + p + '"';
-  const pRow = (db, p) => { const a = db.attempts.find((x) => x.participantId === p.id); return { id: p.id, name: p.name, email: p.email, bmdc: p.bmdc, phone: p.phone, institution: p.institution, registeredAt: p.registeredAt, lastLoginAt: p.lastLoginAt || null, status: a ? a.status : "registered", score: a && a.score != null ? a.score : null, total: a && a.total ? a.total : null, timeTakenSec: a && a.timeTakenSec != null ? a.timeTakenSec : null, tabSwitches: a ? a.tabSwitches : 0, submittedAt: a && a.submittedAt ? a.submittedAt : null, late: false, inBase: db.smsBase.includes(p.phone), aid: a && a.id }; };
+  const pRow = (db, p) => { const a = db.attempts.find((x) => x.participantId === p.id); return { id: p.id, name: p.name, email: p.email, bmdc: p.bmdc, phone: p.phone, institution: p.institution, birthDay: p.birthDay || "", registeredAt: p.registeredAt, lastLoginAt: p.lastLoginAt || null, status: a ? a.status : "registered", score: a && a.score != null ? a.score : null, total: a && a.total ? a.total : null, timeTakenSec: a && a.timeTakenSec != null ? a.timeTakenSec : null, tabSwitches: a ? a.tabSwitches : 0, submittedAt: a && a.submittedAt ? a.submittedAt : null, late: false, inBase: db.smsBase.includes(p.phone), aid: a && a.id }; };
   const readAsDataUrl = (file) => new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(rd.result); rd.onerror = () => rej(new Error("Could not read the file.")); rd.readAsDataURL(file); });
 
   return {
@@ -82,11 +82,12 @@ window.BOI_API = (function () {
       const db = load();
       if (db.settings.registrationOpen === false) fail("Registration is closed.");
       const bmdc = normBmdc(d.bmdc), phone = normPhone(d.phone), email = norm(d.email).toLowerCase();
+      let bd = norm(d.birthDay).replace(/\D/g, ""); if (bd.length === 1) bd = "0" + bd;
       if (!/^01[3-9]\d{8}$/.test(phone)) fail("Enter an 11-digit Bangladeshi mobile number.");
-      if (!d.password || d.password.length < 6) fail("Choose a password of at least 6 characters.");
-      const ex = db.participants.find((p) => p.bmdc === bmdc || p.email === email || p.phone === phone);
-      if (ex) { if (ex.phone === phone) fail("This mobile number is already registered. Log in instead."); if (ex.bmdc === bmdc) fail("This BMDC number is already registered. Log in with the mobile number you used."); fail("This email is already registered. Log in with the mobile number you used."); }
-      const p = { id: uid(), token: "t_" + uid(), name: norm(d.name), email, bmdc, phone, institution: norm(d.institution), password: d.password, registeredAt: Date.now(), lastLoginAt: Date.now() };
+      if (!/^(0[1-9]|[12]\d|3[01])$/.test(bd)) fail("Enter the day of the month you were born (01 to 31).");
+      const ex = db.participants.find((p) => p.phone === phone || p.email === email || (bmdc && p.bmdc === bmdc));
+      if (ex) { if (ex.phone === phone) fail("This mobile number is already registered. Log in instead."); if (bmdc && ex.bmdc === bmdc) fail("This BMDC number is already registered. Log in with the mobile number you used."); fail("This email is already registered. Log in with the mobile number you used."); }
+      const p = { id: uid(), token: "t_" + uid(), name: norm(d.name), email, bmdc, phone, institution: norm(d.institution), birthDay: bd, password: bd + phone.slice(-4), registeredAt: Date.now(), lastLoginAt: Date.now() };
       db.participants.push(p); save(db);
       return delay({ token: p.token });
     },
@@ -99,7 +100,7 @@ window.BOI_API = (function () {
     async me(token) {
       const db = load(); const p = pByToken(db, token); const a = db.attempts.find((x) => x.participantId === p.id);
       const r = a && a.status === "completed" ? ranked(db).find((x) => x.a.id === a.id) : null;
-      return delay({ participant: { id: p.id, name: p.name, phone: p.phone, email: p.email, bmdc: p.bmdc, institution: p.institution }, attempt: a ? { status: a.status, score: a.score ?? null, total: a.total ?? null, timeTakenSec: a.timeTakenSec ?? null, rank: r ? r.rank : null, endsAt: a.endsAt } : null, materials: db.materials.filter((m) => m.visible) });
+      return delay({ participant: { id: p.id, name: p.name, phone: p.phone, email: p.email, bmdc: p.bmdc, institution: p.institution, birthDay: p.birthDay || "" }, attempt: a ? { status: a.status, score: a.score ?? null, total: a.total ?? null, timeTakenSec: a.timeTakenSec ?? null, rank: r ? r.rank : null, endsAt: a.endsAt } : null, materials: db.materials.filter((m) => m.visible) });
     },
 
     async startAttempt(token) {
@@ -179,8 +180,8 @@ window.BOI_API = (function () {
         byPhone.forEach((p) => { const r = pRow(db, p); rows.push([csvPhone(p.phone), "no", "yes", r.name, r.bmdc, r.email, r.institution, r.status, r.score ?? "", r.total ?? "", r.timeTakenSec ?? "", rankOf(p), new Date(p.registeredAt).toISOString()]); });
         return { filename: `battle-of-interns-sms-base-match-${stamp}.csv`, csv: csv(rows) };
       }
-      const rows = [["rank", "name", "phone", "bmdc", "email", "institution", "in_sms_base", "registered_at", "status", "score", "total", "time_taken_sec", "tab_switches", "late_submission", "submitted_at"]];
-      db.participants.forEach((p) => { const r = pRow(db, p); rows.push([rankOf(p), r.name, csvPhone(r.phone), r.bmdc, r.email, r.institution, r.inBase ? "yes" : "no", new Date(r.registeredAt).toISOString(), r.status, r.score ?? "", r.total ?? "", r.timeTakenSec ?? "", r.tabSwitches, "", r.submittedAt ? new Date(r.submittedAt).toISOString() : ""]); });
+      const rows = [["rank", "name", "phone", "bmdc", "email", "institution", "birth_day", "in_sms_base", "registered_at", "status", "score", "total", "time_taken_sec", "tab_switches", "late_submission", "submitted_at"]];
+      db.participants.forEach((p) => { const r = pRow(db, p); rows.push([rankOf(p), r.name, csvPhone(r.phone), r.bmdc, r.email, r.institution, csvPhone(r.birthDay), r.inBase ? "yes" : "no", new Date(r.registeredAt).toISOString(), r.status, r.score ?? "", r.total ?? "", r.timeTakenSec ?? "", r.tabSwitches, "", r.submittedAt ? new Date(r.submittedAt).toISOString() : ""]); });
       return { filename: `battle-of-interns-participants-${stamp}.csv`, csv: csv(rows) };
     },
     async adminInstitutions(t) { const db = load(); adminCheck(db, t); return delay(sortedInst(db.institutions || [])); },

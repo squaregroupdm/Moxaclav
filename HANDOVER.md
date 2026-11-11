@@ -18,7 +18,7 @@ Everything a developer needs to take this project live and maintain it is in thi
 
 1. Clone the repo. Open `public/api/config.php` and set `initial_admin_password` and `secret`.
 2. Upload `public/` to the web root of a PHP 8 host (HTTPS required). Place `seed/` and `data/` one level above `public/`, exactly as in the repo. Make `data/` and `public/uploads/` writable by PHP. Check that a 20 MB upload works from Admin > Study materials (the included `.user.ini`/`.htaccess` raise the limit to 64 MB on most hosts).
-3. Open the site once. The database and tables are created automatically; the 25 questions, 112 medical colleges and 6 study materials load.
+3. Open the site once. The database and tables are created automatically; the 25 questions, 104 medical colleges and 6 study materials load.
 4. Open `/#admin`, sign in, change the password (Settings tab).
 5. Confirm the question set (Questions tab). Upload the SMS base (SMS base tab). Set the splash background and any banners (Splash & banners tab).
 6. Settings > Quiz access: choose manual or scheduled. Registration can stay open while the quiz is closed; doctors register early and log in on quiz day. Confirm duration (10 min) and questions per attempt (25).
@@ -30,7 +30,7 @@ Everything a developer needs to take this project live and maintain it is in thi
 - Open or close the quiz: Admin > Overview (one click) or schedule it in Settings.
 - Add, edit or hide questions: Admin > Questions.
 - Add study materials, banners, splash image: the matching admin tabs.
-- Reset a doctor's forgotten password: Admin > Participants > Password.
+- Remind a doctor of their password (birth day + last 4 digits): Admin > Participants, Password column; override it with the Password button if needed.
 - Compare with the SMS base: Admin > SMS base > Export match report.
 - Watch participation and per-question accuracy: Admin > Overview.
 - Look up a doctor, view their answer sheet, remove a duplicate: Admin > Participants.
@@ -42,7 +42,7 @@ Everything a developer needs to take this project live and maintain it is in thi
 | Change | File |
 |---|---|
 | Colours, fonts, spacing, background pattern opacity | `public/assets/app.css` (tokens at the top) |
-| Wording on any screen, validation rules (BMDC format, phone format) | `public/assets/app.js` (search for the text) and the same rules in `public/api/index.php` under `register` |
+| Wording on any screen, validation rules (phone format, birth day), the password formula | `public/assets/app.js` (search for the text) and `derived_password()` plus the `register` case in `public/api/index.php` |
 | Scoring or ranking rule | `score_attempt()` and `rank_of()` in `public/api/index.php` |
 | Allowed upload types and folders | `admin/upload` case in `public/api/index.php` |
 | Splash, banner and pop-up layout | `.splash`, `.banner-top`, `.popup` rules in `public/assets/app.css` |

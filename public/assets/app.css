@@ -276,6 +276,8 @@ td.actions { white-space: nowrap; }
 .splash-login { font-size: 0.95rem; opacity: 0.9; }
 .splash-login a { color: inherit; font-weight: 600; }
 .splash-art { width: min(220px, 50vw); color: var(--art-2); }
+.splash-art .hero-art { width: 100%; }
+.hero-icon { object-fit: contain; aspect-ratio: 1; }
 .splash.has-image .splash-art { color: #ffffff; opacity: 0.9; }
 .splash-foot { position: relative; z-index: 1; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); font-size: 0.78rem; opacity: 0.85; display: grid; gap: 10px; max-width: 760px; margin: 0 auto; width: 100%; }
 .splash-foot ol { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
@@ -325,3 +327,18 @@ td.actions { white-space: nowrap; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; }
 .user-chip { display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; flex-shrink: 0; }
 @media (max-width: 480px) { .user-chip .pill { display: none; } }
+
+/* Autocomplete */
+.ac { position: relative; }
+.ac-list { position: absolute; left: 0; right: 0; top: calc(100% - 22px); z-index: 20; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); max-height: 260px; overflow-y: auto; display: grid; }
+.ac-item { text-align: left; border: 0; background: transparent; padding: 10px 12px; font: inherit; color: var(--fg); cursor: pointer; border-bottom: 1px solid var(--line); }
+.ac-item:hover, .ac-item:focus { background: var(--accent-soft); }
+.ac-note { padding: 8px 12px; font-size: 0.8rem; color: var(--muted); }
+/* Big countdown */
+.cd-hero { display: grid; gap: 12px; justify-items: center; text-align: center; padding-block: 6px; }
+.cd-hero h2 { font-size: 1.5rem; }
+.countdown.big { gap: 10px; flex-wrap: wrap; justify-content: center; }
+.countdown.big .cd { min-width: 72px; padding: 12px 10px; background: var(--accent-soft); }
+.countdown.big .cd b { font-size: 2.2rem; color: var(--primary); }
+.countdown.muted-cd .cd b { color: var(--muted); }
+@media (max-width: 400px) { .countdown.big .cd { min-width: 64px; } .countdown.big .cd b { font-size: 1.8rem; } }

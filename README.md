@@ -15,9 +15,9 @@ Two ways to run it:
 
 | Feature | Detail |
 |---|---|
-| Start screen | Full-screen splash with a replaceable background image (Admin > Splash & banners), one "Register Now" button, a "Log in" link, the five terms and conditions in the footer and a link to the full text. |
-| Accounts | Register once with name, BMDC number, mobile number (11 digits, 01XXXXXXXXX, the login ID), email, medical college (drop-down of 112 colleges plus "Other") and a password (6+ characters). Participants stay logged in on their device; they log in again with mobile number + password. Admin can reset a forgotten password. |
-| Home page | After login: quiz status card, study materials, rules, ranking link. A horizontal banner on top and a pop-up banner (auto-closes after N seconds, closable) can be switched on from admin. |
+| Start screen | Full-screen splash on the animated AMR pattern, with a replaceable icon above the headline (Admin > Splash & banners), one "Register Now" button, a "Log in" link, the five terms and conditions in the footer and a link to the full text. |
+| Accounts | Register once with name, mobile number (11 digits, 01XXXXXXXXX, the login ID), email, BMDC number (optional, free text), birth day (DD) and medical college (type-ahead list of 104 colleges, A to Z by what is typed; free text allowed). The password is standard for everyone: birth day + last 4 digits of the mobile number (born on the 20th, number ending 3344 = 203344). It is shown on the form before submitting and explained on the login page, so there is no forgot-password flow. Participants stay logged in on their device. Admin can still override a password. |
+| Home page | After login: a "Thanks for registering" card with a large countdown to the scheduled start (or a placeholder until a date is set), then the Start button on the day; study materials; rules; ranking link. A horizontal banner on top and a pop-up banner (auto-closes after N seconds, closable) can be switched on from admin. |
 | Quiz gating | The Start button appears only when the quiz is open. Admin opens/closes it manually or schedules an open and close time; participants see a live countdown. |
 | Timed | 10 minutes by default (admin can change). The end time is fixed by the server when the quiz starts, so closing the tab does not pause it. The page auto-submits at 00:00. Timer turns amber at 2 minutes and red at 30 seconds. |
 | 25 questions, one at a time | From the approved "Rational Use of Antimicrobial Agents" set. Shuffled per participant (admin can switch off). Pick an option, press Next. No going back. |
@@ -38,11 +38,11 @@ There is no link to the admin panel on the participant pages on purpose. Open it
 |---|---|
 | Overview | Quiz access status with one-click Open / Close. Registered, completed, in progress, average score and time, SMS-base coverage. Per-question accuracy bars. |
 | Questions | Add, edit, hide or delete questions. Import from `.json` or `.csv` (append or replace all). Export all questions as JSON. |
-| Participants | Search by name, BMDC, phone, email or college. "In base / outside" badge against the SMS base. View a participant's answer sheet, set a new password, reset their attempt, or remove them. Export participants CSV and the full answers CSV. Phone numbers are exported as 11-digit text (Excel keeps the leading zero). |
+| Participants | Search by name, BMDC, phone, email or college. Password column (birth day + last 4) to remind a doctor by phone. "In base / outside" badge against the SMS base. View a participant's answer sheet, set a new password, reset their attempt, or remove them. Export participants CSV and the full answers CSV. Phone numbers are exported as 11-digit text (Excel keeps the leading zero). |
 | Study materials | Upload files (PDF, Excel, Word, PowerPoint, images) or add links; title, description, visible/hidden, reorder. |
-| Splash & banners | Start-screen headline, sub-line and background image. Top banner (image, link, on/off). Pop-up banner (image, link, seconds, on/off). |
+| Splash & banners | Start-screen headline, sub-line and icon image. Top banner (image, link, on/off). Pop-up banner (image, link, seconds, on/off). |
 | SMS base | Upload the SMS number list (.xlsx, .csv or .txt). Shows how many from the base registered and completed. Export the match report: every base number with registered / completed / score / rank, plus registrations from outside the base. |
-| Medical colleges | Add or remove colleges from the registration drop-down, or restore the built-in list of 112. |
+| Medical colleges | Add or remove colleges from the registration type-ahead list, or restore the built-in list of 104. |
 | Settings | Quiz access (manual open/close or scheduled start/end), registration open/closed, ranking board visible, show explanations after submission, duration, questions per attempt, shuffle, terms and conditions text, admin password, clear attempts, delete all participants. |
 
 ---|---|
@@ -72,7 +72,7 @@ battle-of-interns/
   data/                           the SQLite database is created here automatically (keep it out of git)
   seed/questions.json             the 30 starting questions, loaded on first run
   seed/questions.csv              same questions as a CSV template for admin import
-  seed/institutions.json          default list of Bangladesh medical colleges for the drop-down
+  seed/institutions.json          the compiled list of 104 medical colleges for the type-ahead
   seed/materials.json             the six study materials loaded on first run
   demo/battle-of-interns-demo.html  standalone demo, no server needed
   demo/api-local.js               demo version of the API (browser storage)
@@ -129,7 +129,7 @@ All routes: `POST api/index.php?r=<route>` with a JSON body, JSON reply. Errors 
 | Route | Body | Returns |
 |---|---|---|
 | `settings` | | public settings: quiz state, splash, banners, terms, colleges |
-| `register` | name, email, bmdc, phone, institution, password, consent | `{token}` (logged in) |
+| `register` | name, email, bmdc (optional), phone, institution, birthDay, consent | `{token}` (logged in); password = birthDay + last 4 digits of phone |
 | `login` | phone, password | `{token}` |
 | `me` | token | participant, attempt summary, visible materials |
 | `start` | token | attempt with questions (no answer keys), endsAt, saved answers; refused unless the quiz is open |

@@ -48,6 +48,7 @@ function db(): PDO {
     $cols = array_column($pdo->query('PRAGMA table_info(participants)')->fetchAll(PDO::FETCH_ASSOC), 'name');
     if (!in_array('password_hash', $cols, true)) { $pdo->exec('ALTER TABLE participants ADD COLUMN password_hash TEXT'); }
     if (!in_array('last_login_at', $cols, true)) { $pdo->exec('ALTER TABLE participants ADD COLUMN last_login_at INTEGER'); }
+    if (!in_array('birth_day', $cols, true)) { $pdo->exec('ALTER TABLE participants ADD COLUMN birth_day TEXT'); }
     if (!setting('admin_hash')) { seed($pdo); }
     return $pdo;
 }
@@ -58,7 +59,7 @@ function default_settings(): array {
     return ['campaignName' => 'Battle of Interns', 'sponsor' => 'Moxaclav', 'durationSec' => 600, 'questionCount' => 25, 'shuffle' => true,
         'leaderboardPublic' => true, 'showExplanations' => true, 'registrationOpen' => true,
         'quizMode' => 'manual', 'quizOpen' => false, 'quizStartAt' => null, 'quizEndAt' => null,
-        'splashImage' => '', 'splashHeadline' => 'Battle of Interns', 'splashSub' => 'An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.',
+        'splashIcon' => '', 'splashHeadline' => 'Battle of Interns', 'splashSub' => 'An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.',
         'bannerTop' => ['enabled' => false, 'image' => '', 'link' => ''], 'bannerPopup' => ['enabled' => false, 'image' => '', 'link' => '', 'seconds' => 10],
         'terms' => default_terms()];
 }
@@ -112,7 +113,7 @@ function public_settings(): array {
     $qc = (int) setting('questionCount', 25); $ac = active_count();
     return ['campaignName' => setting('campaignName'), 'sponsor' => setting('sponsor'), 'durationSec' => (int) setting('durationSec', 600), 'questionCount' => $ac ? min($qc, $ac) : $qc,
         'leaderboardPublic' => (bool) setting('leaderboardPublic'), 'showExplanations' => setting('showExplanations', true) !== false, 'registrationOpen' => setting('registrationOpen', true) !== false,
-        'quiz' => quiz_state() + ['serverNow' => now_ms()], 'splash' => ['image' => (string) setting('splashImage', ''), 'headline' => (string) setting('splashHeadline', 'Battle of Interns'), 'sub' => (string) setting('splashSub', '')],
+        'quiz' => quiz_state() + ['serverNow' => now_ms()], 'splash' => ['icon' => (string) setting('splashIcon', ''), 'headline' => (string) setting('splashHeadline', 'Battle of Interns'), 'sub' => (string) setting('splashSub', '')],
         'banners' => ['top' => setting('bannerTop') ?: default_settings()['bannerTop'], 'popup' => setting('bannerPopup') ?: default_settings()['bannerPopup']],
         'terms' => (string) setting('terms', default_terms()), 'institutions' => institutions(), 'demo' => false];
 }
@@ -125,7 +126,8 @@ function questions_by_id(array $ids): array {
     $st = db()->prepare("SELECT * FROM questions WHERE id IN ($in)"); $st->execute($ids);
     $m = []; foreach ($st as $r) { $m[$r['id']] = q_row_to_arr($r); } return $m;
 }
-function norm_bmdc(string $v): string { $v = strtoupper(preg_replace('/\s+/', '', $v)); return preg_replace('/^([A-Z]+)-?(\d+)$/', '$1-$2', $v); }
+function norm_bmdc(string $v): string { return mb_substr(trim(preg_replace('/\s+/', ' ', strtoupper($v))), 0, 40); }
+function derived_password(string $birthDay, string $phone): string { return $birthDay . substr($phone, -4); }
 function norm_phone(string $v): string { $v = preg_replace('/[^\d+]/', '', $v); $v = preg_replace('/^\+?88/', '', $v); return $v; }
 function materials_list(bool $all = false): array {
     $rows = []; foreach (db()->query('SELECT * FROM materials ' . ($all ? '' : 'WHERE visible=1 ') . 'ORDER BY sort, created_at') as $r) { $rows[] = ['id' => $r['id'], 'title' => $r['title'], 'description' => $r['description'], 'url' => $r['url'], 'type' => $r['type'], 'size' => $r['size'] !== null ? (int) $r['size'] : null, 'visible' => (bool) $r['visible'], 'createdAt' => (int) $r['created_at']]; }
@@ -170,7 +172,7 @@ function result_payload(array $a, array $p): array {
 function me_payload(array $p): array {
     $a = attempt_of($p['id']); $att = null;
     if ($a) { $att = ['status' => $a['status'], 'score' => $a['score'] !== null ? (int) $a['score'] : null, 'total' => $a['total'] !== null ? (int) $a['total'] : null, 'timeTakenSec' => $a['time_taken_sec'] !== null ? (int) $a['time_taken_sec'] : null, 'rank' => $a['status'] === 'completed' ? rank_of($a['id']) : null, 'endsAt' => (int) $a['ends_at']]; }
-    return ['participant' => ['id' => $p['id'], 'name' => $p['name'], 'phone' => $p['phone'], 'email' => $p['email'], 'bmdc' => $p['bmdc'], 'institution' => $p['institution']], 'attempt' => $att, 'materials' => materials_list(false)];
+    return ['participant' => ['id' => $p['id'], 'name' => $p['name'], 'phone' => $p['phone'], 'email' => $p['email'], 'bmdc' => $p['bmdc'], 'institution' => $p['institution'], 'birthDay' => $p['birth_day'] ?? ''], 'attempt' => $att, 'materials' => materials_list(false)];
 }
 
 /* ---------- admin auth ---------- */
@@ -192,7 +194,7 @@ function csv_line_raw(array $cells): string {
     return implode(',', array_map(fn($v) => (is_string($v) && str_starts_with($v, '="')) ? $v : (preg_match('/[",\n]/', (string) $v) ? '"' . str_replace('"', '""', (string) $v) . '"' : (string) $v), $cells)) . "\r\n";
 }
 function participant_row(array $r): array {
-    return ['id' => $r['id'], 'name' => $r['name'], 'email' => $r['email'], 'bmdc' => $r['bmdc'], 'phone' => $r['phone'], 'institution' => $r['institution'], 'registeredAt' => (int) $r['registered_at'], 'lastLoginAt' => $r['last_login_at'] ? (int) $r['last_login_at'] : null, 'status' => $r['status'] ?: 'registered', 'score' => $r['score'] !== null ? (int) $r['score'] : null, 'total' => $r['total'] !== null ? (int) $r['total'] : null, 'timeTakenSec' => $r['time_taken_sec'] !== null ? (int) $r['time_taken_sec'] : null, 'tabSwitches' => (int) ($r['tab_switches'] ?? 0), 'submittedAt' => $r['submitted_at'] ? (int) $r['submitted_at'] : null, 'late' => (bool) ($r['late'] ?? false), 'inBase' => (bool) ($r['in_base'] ?? false)];
+    return ['id' => $r['id'], 'name' => $r['name'], 'email' => $r['email'], 'bmdc' => $r['bmdc'], 'phone' => $r['phone'], 'institution' => $r['institution'], 'birthDay' => $r['birth_day'] ?? '', 'registeredAt' => (int) $r['registered_at'], 'lastLoginAt' => $r['last_login_at'] ? (int) $r['last_login_at'] : null, 'status' => $r['status'] ?: 'registered', 'score' => $r['score'] !== null ? (int) $r['score'] : null, 'total' => $r['total'] !== null ? (int) $r['total'] : null, 'timeTakenSec' => $r['time_taken_sec'] !== null ? (int) $r['time_taken_sec'] : null, 'tabSwitches' => (int) ($r['tab_switches'] ?? 0), 'submittedAt' => $r['submitted_at'] ? (int) $r['submitted_at'] : null, 'late' => (bool) ($r['late'] ?? false), 'inBase' => (bool) ($r['in_base'] ?? false)];
 }
 const PARTICIPANT_SQL = "SELECT p.*, a.id aid, a.status, a.score, a.total, a.time_taken_sec, a.tab_switches, a.submitted_at, a.late, (SELECT 1 FROM sms_base b WHERE b.phone=p.phone) in_base FROM participants p LEFT JOIN attempts a ON a.participant_id=p.id";
 
@@ -207,22 +209,22 @@ switch ($route) {
 
     case 'register': {
         if (setting('registrationOpen', true) === false) fail('Registration is closed.');
-        $name = s($in['name'] ?? ''); $email = strtolower(s($in['email'] ?? '')); $bmdc = norm_bmdc(s($in['bmdc'] ?? '')); $phone = norm_phone(s($in['phone'] ?? '')); $inst = s($in['institution'] ?? ''); $pw = (string) ($in['password'] ?? '');
+        $name = s($in['name'] ?? ''); $email = strtolower(s($in['email'] ?? '')); $bmdc = norm_bmdc(s($in['bmdc'] ?? '')); $phone = norm_phone(s($in['phone'] ?? '')); $inst = s($in['institution'] ?? '');
+        $bd = preg_replace('/\D/', '', s($in['birthDay'] ?? '')); if ($bd !== '' && strlen($bd) === 1) $bd = '0' . $bd;
         if (mb_strlen($name) < 3) fail('Enter your full name.');
-        if (!preg_match('/^[A-Z]{1,2}-\d{3,7}$/', $bmdc)) fail('Enter a valid BMDC number, e.g. A-123456.');
         if (!preg_match('/^01[3-9]\d{8}$/', $phone)) fail('Enter an 11-digit Bangladeshi mobile number.');
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('Enter a valid email address.');
-        if (mb_strlen($inst) < 3) fail('Select your medical college, or choose Other and type it.');
-        if (strlen($pw) < 6) fail('Choose a password of at least 6 characters.');
+        if (mb_strlen($inst) < 3) fail('Select or type your medical college.');
+        if (!preg_match('/^(0[1-9]|[12]\d|3[01])$/', $bd)) fail('Enter the day of the month you were born (01 to 31).');
         if (empty($in['consent'])) fail('Please accept the terms and conditions to continue.');
-        $st = db()->prepare('SELECT phone, bmdc, email FROM participants WHERE bmdc=? OR email=? OR phone=? LIMIT 1'); $st->execute([$bmdc, $email, $phone]);
+        $st = db()->prepare('SELECT phone, bmdc, email FROM participants WHERE phone=? OR email=? OR (bmdc<>\'\' AND bmdc=?) LIMIT 1'); $st->execute([$phone, $email, $bmdc]);
         if ($ex = $st->fetch(PDO::FETCH_ASSOC)) {
             if ($ex['phone'] === $phone) fail('This mobile number is already registered. Log in instead.');
-            if ($ex['bmdc'] === $bmdc) fail('This BMDC number is already registered. Log in with the mobile number you used.');
+            if ($bmdc !== '' && $ex['bmdc'] === $bmdc) fail('This BMDC number is already registered. Log in with the mobile number you used.');
             fail('This email is already registered. Log in with the mobile number you used.');
         }
         $id = uid(); $token = 't_' . bin2hex(random_bytes(16));
-        db()->prepare('INSERT INTO participants (id,token,name,email,bmdc,phone,institution,password_hash,registered_at,last_login_at) VALUES (?,?,?,?,?,?,?,?,?,?)')->execute([$id, $token, mb_substr($name, 0, 80), $email, $bmdc, $phone, mb_substr($inst, 0, 120), password_hash($pw, PASSWORD_DEFAULT), now_ms(), now_ms()]);
+        db()->prepare('INSERT INTO participants (id,token,name,email,bmdc,phone,institution,password_hash,birth_day,registered_at,last_login_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)')->execute([$id, $token, mb_substr($name, 0, 80), $email, $bmdc, $phone, mb_substr($inst, 0, 120), password_hash(derived_password($bd, $phone), PASSWORD_DEFAULT), $bd, now_ms(), now_ms()]);
         out(['token' => $token]);
     }
 
@@ -382,8 +384,8 @@ switch ($route) {
             foreach ($ps as $r) { $csv .= csv_line_raw([csv_phone($r['phone']), 'no', 'yes', $r['name'], $r['bmdc'], $r['email'], $r['institution'], $r['status'] ?: 'registered', $r['score'] ?? '', $r['total'] ?? '', $r['time_taken_sec'] ?? '', $r['status'] === 'completed' ? rank_of($r['aid']) : '', gmdate('c', (int) ($r['registered_at'] / 1000))]); }
             out(['filename' => "battle-of-interns-sms-base-match-$stamp.csv", 'csv' => $csv]);
         }
-        $csv = csv_line(['rank', 'name', 'phone', 'bmdc', 'email', 'institution', 'in_sms_base', 'registered_at', 'status', 'score', 'total', 'time_taken_sec', 'tab_switches', 'late_submission', 'submitted_at']);
-        foreach (db()->query(PARTICIPANT_SQL . ' ORDER BY a.score DESC, a.time_taken_sec ASC, p.registered_at ASC') as $r) { $csv .= csv_line_raw([$r['status'] === 'completed' ? rank_of($r['aid']) : '', $r['name'], csv_phone($r['phone']), $r['bmdc'], $r['email'], $r['institution'], $r['in_base'] ? 'yes' : 'no', gmdate('c', (int) ($r['registered_at'] / 1000)), $r['status'] ?: 'registered', $r['score'] ?? '', $r['total'] ?? '', $r['time_taken_sec'] ?? '', $r['tab_switches'] ?? 0, !empty($r['late']) ? 'yes' : '', $r['submitted_at'] ? gmdate('c', (int) ($r['submitted_at'] / 1000)) : '']); }
+        $csv = csv_line(['rank', 'name', 'phone', 'bmdc', 'email', 'institution', 'birth_day', 'in_sms_base', 'registered_at', 'status', 'score', 'total', 'time_taken_sec', 'tab_switches', 'late_submission', 'submitted_at']);
+        foreach (db()->query(PARTICIPANT_SQL . ' ORDER BY a.score DESC, a.time_taken_sec ASC, p.registered_at ASC') as $r) { $csv .= csv_line_raw([$r['status'] === 'completed' ? rank_of($r['aid']) : '', $r['name'], csv_phone($r['phone']), $r['bmdc'], $r['email'], $r['institution'], csv_phone((string) ($r['birth_day'] ?? '')), $r['in_base'] ? 'yes' : 'no', gmdate('c', (int) ($r['registered_at'] / 1000)), $r['status'] ?: 'registered', $r['score'] ?? '', $r['total'] ?? '', $r['time_taken_sec'] ?? '', $r['tab_switches'] ?? 0, !empty($r['late']) ? 'yes' : '', $r['submitted_at'] ? gmdate('c', (int) ($r['submitted_at'] / 1000)) : '']); }
         out(['filename' => "battle-of-interns-participants-$stamp.csv", 'csv' => $csv]);
     }
     case 'admin/institutions': { require_admin(); out(institutions()); }
@@ -434,7 +436,7 @@ switch ($route) {
     case 'admin/settings-save': {
         require_admin();
         $allowed = ['campaignName' => 'string', 'sponsor' => 'string', 'durationSec' => 'int', 'questionCount' => 'int', 'shuffle' => 'bool', 'leaderboardPublic' => 'bool', 'showExplanations' => 'bool', 'registrationOpen' => 'bool',
-            'quizMode' => 'string', 'quizOpen' => 'bool', 'quizStartAt' => 'int?', 'quizEndAt' => 'int?', 'splashImage' => 'string', 'splashHeadline' => 'string', 'splashSub' => 'text', 'terms' => 'text', 'bannerTop' => 'banner', 'bannerPopup' => 'banner'];
+            'quizMode' => 'string', 'quizOpen' => 'bool', 'quizStartAt' => 'int?', 'quizEndAt' => 'int?', 'splashIcon' => 'string', 'splashHeadline' => 'string', 'splashSub' => 'text', 'terms' => 'text', 'bannerTop' => 'banner', 'bannerPopup' => 'banner'];
         foreach ($allowed as $k => $type) {
             if (!array_key_exists($k, $in)) continue; $v = $in[$k];
             if ($type === 'string') $v = mb_substr(s($v), 0, 300); elseif ($type === 'text') $v = mb_substr(s($v), 0, 5000); elseif ($type === 'int') $v = max(1, (int) $v); elseif ($type === 'int?') $v = $v === null || $v === '' ? null : (int) $v;

@@ -135,12 +135,12 @@
   const Splash = {
     mount() {
       if (!document.querySelector(".bgart")) document.body.insertAdjacentHTML("afterbegin", BG_ART);
-      const sp = settings.splash || {}; const img = assetUrl(sp.image);
+      const sp = settings.splash || {};
       $app.innerHTML = `
-        <div class="splash ${img ? "has-image" : ""}">
-          <div class="splash-bg ${img ? "has-image" : ""}" ${img ? `style="background-image:url('${esc(img)}')"` : ""}></div>
+        <div class="splash">
+          <div class="splash-bg"></div>
           <div class="splash-body">
-            ${img ? "" : `<div class="splash-art">${HERO_ART.replace('class="hero-art"', 'class="hero-art" style="width:100%"')}</div>`}
+            <div class="splash-art">${splashIcon()}</div>
             <span class="splash-kicker">${esc(settings.sponsor)} presents &middot; World AMR Awareness Week</span>
             <h1>${esc(sp.headline || settings.campaignName)}</h1>
             <p class="splash-sub">${esc(sp.sub || "")}</p>
@@ -156,6 +156,7 @@
       document.getElementById("lnkTerms").addEventListener("click", (e) => { e.preventDefault(); showTerms(); });
     },
   };
+  function splashIcon(cls) { const ic = assetUrl((settings.splash || {}).icon); return ic ? `<img class="${cls || "hero-art"} hero-icon" src="${esc(ic)}" alt="">` : HERO_ART.replace('class="hero-art"', `class="${cls || "hero-art"}"`); }
   const Terms = {
     page() { shell(`<div class="card stack"><div class="row between"><h1 style="font-size:1.5rem">Terms and conditions</h1><a class="btn sm" href="#">Back</a></div><div class="terms-body">${esc(settings.terms)}</div></div>`, { right: userChip() }); bindLogout(); },
   };
@@ -164,6 +165,21 @@
   const Auth = {
     pwField(id, label, hint) {
       return `<div class="field"><label for="${id}">${label}</label><div class="pw-wrap"><input class="input" id="${id}" name="${id}" type="password" autocomplete="${id === "password" ? "new-password" : "current-password"}" required><button type="button" class="pw-toggle" data-pw="${id}">Show</button></div>${hint ? `<span class="hint">${hint}</span>` : ""}</div>`;
+    },
+    autocomplete(input, list, names) {
+      const render = () => {
+        const q = input.value.trim().toLowerCase();
+        if (!q) { list.hidden = true; return; }
+        const starts = names.filter((n) => n.toLowerCase().startsWith(q)); const contains = names.filter((n) => !n.toLowerCase().startsWith(q) && n.toLowerCase().includes(q));
+        const items = starts.concat(contains).slice(0, 12);
+        const exact = names.some((n) => n.toLowerCase() === q);
+        list.innerHTML = items.map((n) => `<button type="button" class="ac-item" data-v="${esc(n)}">${esc(n)}</button>`).join("") + (!exact && q.length >= 3 ? `<div class="ac-note">${items.length ? "Not in the list? Keep typing the full name." : `No match. Your college will be saved as "${esc(input.value.trim())}".`}</div>` : "");
+        list.hidden = !list.innerHTML;
+        list.querySelectorAll(".ac-item").forEach((b) => b.addEventListener("mousedown", (e) => { e.preventDefault(); input.value = b.dataset.v; list.hidden = true; input.dispatchEvent(new Event("change")); }));
+      };
+      input.addEventListener("input", render); input.addEventListener("focus", render);
+      input.addEventListener("blur", () => setTimeout(() => { list.hidden = true; }, 150));
+      input.addEventListener("keydown", (e) => { if (e.key === "Escape") list.hidden = true; if (e.key === "Enter" && !list.hidden) { const f = list.querySelector(".ac-item"); if (f && input.value.trim().toLowerCase() !== f.dataset.v.toLowerCase()) { e.preventDefault(); input.value = f.dataset.v; list.hidden = true; } } });
     },
     bindPw(root) { root.querySelectorAll("[data-pw]").forEach((b) => b.addEventListener("click", () => { const i = root.querySelector("#" + b.dataset.pw); i.type = i.type === "password" ? "text" : "password"; b.textContent = i.type === "password" ? "Show" : "Hide"; })); },
     showErrors(form, problems) {
@@ -178,23 +194,21 @@
       if (token()) { location.hash = ""; return; }
       shell(`
         <div class="stack">
-          <div class="hero"><div class="hero-text"><span class="eyebrow">Step 1 of 2</span><h1>Create your account</h1><p class="muted">Register once now. You will use your mobile number and password to log in on quiz day.</p></div>${HERO_ART}</div>
+          <div class="hero"><div class="hero-text"><span class="eyebrow">Registration</span><h1>Create your account</h1><p class="muted">Register once now. On quiz day you log in with your mobile number and a password you cannot forget.</p></div>${splashIcon()}</div>
           ${settings.registrationOpen ? `
           <form class="card stack" id="regForm" novalidate>
             ${err ? `<div class="alert bad">${esc(err)}</div>` : ""}
             <div class="field"><label for="f_name">Full name</label><input class="input" id="f_name" name="name" autocomplete="name" placeholder="Dr. Full Name" required></div>
-            <div class="field"><label for="f_bmdc">BMDC registration number</label><input class="input" id="f_bmdc" name="bmdc" placeholder="A-123456" autocomplete="off" required><span class="hint">As printed on your BMDC certificate. One attempt per registration number.</span></div>
             <div class="grid-2">
               <div class="field"><label for="f_phone">Mobile number</label><input class="input" id="f_phone" name="phone" inputmode="tel" placeholder="01XXXXXXXXX" autocomplete="tel" required><span class="hint">11 digits. This is your login ID.</span></div>
               <div class="field"><label for="f_email">Email</label><input class="input" id="f_email" name="email" type="email" inputmode="email" placeholder="you@example.com" required></div>
             </div>
-            <div class="field"><label for="f_inst">Medical college</label>
-              <select class="input" id="f_inst" name="institution" required><option value="">Select your medical college</option>${(settings.institutions || []).map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}<option value="__other">Other (not in the list)</option></select></div>
-            <div class="field" id="instOtherWrap" hidden><label for="f_inst_other">Name of your medical college</label><input class="input" id="f_inst_other" name="institutionOther" placeholder="Type the full name"></div>
             <div class="grid-2">
-              ${Auth.pwField("password", "Choose a password", "At least 6 characters.")}
-              ${Auth.pwField("password2", "Repeat password", "")}
+              <div class="field"><label for="f_bmdc">BMDC registration number <span class="muted">(optional)</span></label><input class="input" id="f_bmdc" name="bmdc" placeholder="If you have one" autocomplete="off"><span class="hint">Leave blank if yours has not been issued yet.</span></div>
+              <div class="field"><label for="f_bday">Day of the month you were born</label><input class="input" id="f_bday" name="birthDay" inputmode="numeric" maxlength="2" placeholder="e.g. 01 or 20" required><span class="hint">Just the day, two digits. It becomes part of your password.</span></div>
             </div>
+            <div class="field ac"><label for="f_inst">Medical college / hospital</label><input class="input" id="f_inst" name="institution" placeholder="Start typing the name, e.g. Dha..." autocomplete="off" required><div class="ac-list" id="instList" hidden></div><span class="hint">Pick from the list as you type. If yours is not there, just type the full name.</span></div>
+            <div class="alert info" id="pwPreview"><b>Your password</b> will be your birth day followed by the last 4 digits of your mobile number. Fill in both fields above to see it.</div>
             <div class="field"><label class="check"><input type="checkbox" id="f_consent" name="consent" required><span>I confirm I am an intern doctor and I accept the <a href="#terms" id="lnkTerms2">terms and conditions</a>, including that my name and score may appear on the ranking board.</span></label></div>
             <button class="btn primary block" type="submit" id="btnStart">Create account</button>
             <p class="small muted" style="text-align:center">Already registered? <a href="#login">Log in</a></p>
@@ -203,44 +217,41 @@
       const form = document.getElementById("regForm"); if (!form) return;
       Auth.bindPw(form);
       document.getElementById("lnkTerms2").addEventListener("click", (e) => { e.preventDefault(); showTerms(); });
-      const instSel = document.getElementById("f_inst"), instOther = document.getElementById("instOtherWrap");
-      instSel.addEventListener("change", () => { instOther.hidden = instSel.value !== "__other"; if (!instOther.hidden) document.getElementById("f_inst_other").focus(); });
+      Auth.autocomplete(document.getElementById("f_inst"), document.getElementById("instList"), settings.institutions || []);
+      const preview = () => { const bd = form.birthDay.value.replace(/\D/g, "").padStart(2, "0").slice(-2); const ph = form.phone.value.replace(/\D/g, ""); const el = document.getElementById("pwPreview"); if (/^(0[1-9]|[12]\d|3[01])$/.test(bd) && ph.length >= 4) el.innerHTML = `<b>Your password will be: <span class="mono" style="font-size:1.1em">${esc(bd + ph.slice(-4))}</span></b><br><span class="small">Birth day ${esc(bd)} + last 4 digits of your mobile number ${esc(ph.slice(-4))}. Please note it down.</span>`; else el.innerHTML = `<b>Your password</b> will be your birth day followed by the last 4 digits of your mobile number. Fill in both fields above to see it.`; };
+      form.birthDay.addEventListener("input", preview); form.phone.addEventListener("input", preview);
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const d = Object.fromEntries(new FormData(form).entries());
         d.consent = form.consent.checked;
-        if (d.institution === "__other") d.institution = (d.institutionOther || "").trim();
-        delete d.institutionOther;
+        d.birthDay = (d.birthDay || "").replace(/\D/g, "").padStart(2, "0").slice(-2);
         const problems = Auth.validate(d);
         if (Object.keys(problems).length) { Auth.showErrors(form, problems); return; }
-        delete d.password2;
         const btn = document.getElementById("btnStart"); btn.disabled = true; btn.textContent = "Creating account...";
-        try { const r = await API.register(d); store.set("boi_token", r.token); toast("Account created. You are logged in."); location.hash = ""; route(); }
+        try { const r = await API.register(d); store.set("boi_token", r.token); toast("Account created. Your password is " + d.birthDay + d.phone.replace(/\D/g, "").slice(-4)); location.hash = ""; route(); }
         catch (ex) { Auth.register(ex.message || "Could not register."); }
       });
     },
     validate(d) {
       const p = {};
       if (!d.name || d.name.trim().length < 3) p.name = "Enter your full name.";
-      if (!/^[A-Z]{1,2}\d{3,7}$/.test((d.bmdc || "").toUpperCase().replace(/[\s-]/g, ""))) p.bmdc = "Enter a valid BMDC number, e.g. A-123456.";
       if (!/^(\+?88)?01[3-9]\d{8}$/.test((d.phone || "").replace(/[\s-]/g, ""))) p.phone = "Enter an 11-digit Bangladeshi mobile number.";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((d.email || "").trim())) p.email = "Enter a valid email address.";
-      if (!d.institution || d.institution.trim().length < 3) p.institution = "Select your medical college, or choose Other and type it.";
-      if (!d.password || d.password.length < 6) p.password = "Use at least 6 characters.";
-      if (d.password !== d.password2) p.password2 = "The two passwords do not match.";
+      if (!d.institution || d.institution.trim().length < 3) p.institution = "Select or type your medical college.";
+      if (!/^(0[1-9]|[12]\d|3[01])$/.test(d.birthDay || "")) p.birthDay = "Enter the day of the month you were born, 01 to 31.";
       if (!d.consent) p.consent = "Please accept the terms and conditions to continue.";
       return p;
     },
     login(err) {
       if (token()) { location.hash = ""; return; }
       shell(`<div class="stack" style="max-width:440px;margin:0 auto">
-        <div class="hero-text"><span class="eyebrow">Welcome back</span><h1>Log in</h1><p class="muted">Use the mobile number and password you registered with.</p></div>
+        <div class="hero-text"><span class="eyebrow">Welcome back</span><h1>Log in</h1><p class="muted">Use the mobile number you registered with.</p></div>
         <form class="card stack" id="loginForm" novalidate>
           ${err ? `<div class="alert bad">${esc(err)}</div>` : ""}
           <div class="field"><label for="l_phone">Mobile number</label><input class="input" id="l_phone" name="phone" inputmode="tel" placeholder="01XXXXXXXXX" autocomplete="tel" required></div>
-          ${Auth.pwField("password", "Password", "")}
+          ${Auth.pwField("password", "Password", "Your birth day (2 digits) + the last 4 digits of your mobile number. Born on the 5th with a number ending 3344: <b>053344</b>.")}
           <button class="btn primary block" type="submit" id="btnLogin">Log in</button>
-          <p class="small muted" style="text-align:center">New here? <a href="#register">Register now</a><br>Forgot your password? Contact the organisers to reset it.</p>
+          <p class="small muted" style="text-align:center">New here? <a href="#register">Register now</a><br>Still cannot log in? Contact the organisers.</p>
         </form></div>`, { banner: false });
       const form = document.getElementById("loginForm"); Auth.bindPw(form);
       form.addEventListener("submit", async (e) => {
@@ -264,14 +275,15 @@
           <div class="score-tile"><div class="score-big num">${a.score}<small>/${a.total}</small></div><div><p class="muted">${a.rank ? `Current rank <b class="num">#${a.rank}</b>` : ""} &middot; ${mmss(a.timeTakenSec)}</p><p class="small muted">Ranking is by score, then faster completion time.</p></div></div>
           <div class="row"><a class="btn primary" href="#result">See your result</a>${settings.leaderboardPublic ? `<a class="btn" href="#board">Ranking board</a>` : ""}</div>`;
         if (a && a.status === "in_progress") return `<div class="state"><span class="state-dot open"></span><b>Your quiz is in progress</b></div><p class="muted">Your clock is running. Continue where you left off.</p><a class="btn primary" href="#quiz">Continue quiz</a>`;
-        if (q.state === "open") return `<div class="state"><span class="state-dot open"></span><b>The quiz is open</b></div><p class="muted">${settings.questionCount} questions in ${Math.round(settings.durationSec / 60)} minutes. One attempt. The clock starts when you press Start.</p>${q.endAt ? `<p class="small muted">Closes ${fmtDate(q.endAt)}.</p>` : ""}<a class="btn primary" href="#quiz" id="btnGo">Start quiz</a>`;
-        if (q.state === "scheduled") return `<div class="state"><span class="state-dot scheduled"></span><b>Quiz starts ${fmtDate(q.startAt)}</b></div><div class="countdown" id="countdown"></div><p class="muted small">Come back to this page at that time. Use the study materials below until then.</p>`;
-        if (q.state === "closed") return `<div class="state"><span class="state-dot closed"></span><b>The quiz is closed</b></div><p class="muted">Thank you for your interest. ${settings.leaderboardPublic ? '<a href="#board">See the final ranking</a>.' : ""}</p>`;
-        return `<div class="state"><span class="state-dot"></span><b>The quiz has not opened yet</b></div><p class="muted">You are registered. The Start button will appear here when the organisers open the quiz. Prepare with the study materials below.</p>`;
+        const first = p.name.replace(/^dr\.?\s*/i, "").split(" ")[0];
+        if (q.state === "open") return `<div class="state"><span class="state-dot open"></span><b>Your quiz is ready, Dr. ${esc(first)}</b></div><p class="muted">${settings.questionCount} questions in ${Math.round(settings.durationSec / 60)} minutes, one attempt. Your clock starts the moment you press Start, so find a quiet spot first.</p>${q.endAt ? `<p class="small muted">Closes ${fmtDate(q.endAt)}.</p>` : ""}<a class="btn primary" href="#quiz" id="btnGo">Start quiz</a>`;
+        if (q.state === "scheduled") return `<div class="cd-hero"><span class="eyebrow">Thanks for registering, Dr. ${esc(first)}</span><h2>Your quiz starts in</h2><div class="countdown big" id="countdown"></div><p class="muted small">${fmtDate(q.startAt)}. The Start button will appear right here. Meanwhile, go through the study materials below to prepare; we add new ones from time to time.</p></div>`;
+        if (q.state === "closed") return `<div class="state"><span class="state-dot closed"></span><b>The quiz is closed</b></div><p class="muted">Thank you for taking part. ${settings.leaderboardPublic ? '<a href="#board">See the final ranking</a>.' : ""}</p>`;
+        return `<div class="cd-hero"><span class="eyebrow">Thanks for registering, Dr. ${esc(first)}</span><h2>You are on the list</h2><div class="countdown big muted-cd"><div class="cd"><b>--</b><span>days</span></div><div class="cd"><b>--</b><span>hours</span></div><div class="cd"><b>--</b><span>min</span></div></div><p class="muted small">The countdown appears here as soon as we set the quiz date, and the Start button on the day. Meanwhile, go through the study materials below to prepare; we add new ones from time to time.</p></div>`;
       })();
       shell(`
         <div class="stack">
-          <div class="home-head"><div><span class="eyebrow">Participant</span><h1>Hello, ${esc(p.name)}</h1><p class="muted small">${esc(p.institution || "")} &middot; BMDC ${esc(p.bmdc)}</p></div></div>
+          <div class="home-head"><div><span class="eyebrow">Participant</span><h1>Hello, ${esc(p.name)}</h1><p class="muted small">${esc(p.institution || "")}${p.bmdc ? ` &middot; BMDC ${esc(p.bmdc)}` : ""}</p></div></div>
           <div class="card quiz-card">${quizCard}</div>
           <div class="stack-sm">
             <div class="row between"><h2>Study materials</h2><span class="small muted">${me.materials.length} reference${me.materials.length === 1 ? "" : "s"}</span></div>
@@ -294,7 +306,7 @@
       const tick = () => {
         let s = Math.max(0, Math.floor((at - Date.now()) / 1000));
         const d = Math.floor(s / 86400); s -= d * 86400; const h = Math.floor(s / 3600); s -= h * 3600; const m = Math.floor(s / 60); s -= m * 60;
-        el.innerHTML = `${d ? `<div class="cd"><b class="num">${d}</b><span>day${d === 1 ? "" : "s"}</span></div>` : ""}<div class="cd"><b class="num">${pad(h)}</b><span>hours</span></div><div class="cd"><b class="num">${pad(m)}</b><span>min</span></div><div class="cd"><b class="num">${pad(s)}</b><span>sec</span></div>`;
+        el.innerHTML = `<div class="cd"><b class="num">${d}</b><span>day${d === 1 ? "" : "s"}</span></div><div class="cd"><b class="num">${pad(h)}</b><span>hours</span></div><div class="cd"><b class="num">${pad(m)}</b><span>min</span></div><div class="cd"><b class="num">${pad(s)}</b><span>sec</span></div>`;
         if (at - Date.now() <= 0) { Home.stopTimer(); route(); }
       };
       tick(); Home.timer = setInterval(tick, 1000);
@@ -592,13 +604,13 @@
       el.innerHTML = `<div class="stack">
         <div class="row between"><h2>${list.length} participant${list.length === 1 ? "" : "s"}</h2>
           <div class="row"><input class="input" id="pSearch" placeholder="Search name, BMDC, phone, email, college" value="${esc(q)}" style="min-width:240px"><button class="btn sm" id="btnCsv1">Export participants CSV</button><button class="btn sm" id="btnCsv2">Export all answers CSV</button></div></div>
-        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>BMDC</th><th>College</th><th>SMS base</th><th>Status</th><th>Score</th><th>Time</th><th>Tab switches</th><th>Registered</th><th></th></tr></thead><tbody>
-          ${list.length ? list.map((p) => `<tr><td><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.email)}</span></td><td class="num mono">${esc(p.phone)}</td><td class="num">${esc(p.bmdc)}</td><td class="small">${esc(p.institution || "")}</td><td>${p.inBase ? '<span class="pill good">in base</span>' : '<span class="pill">outside</span>'}</td>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Password</th><th>BMDC</th><th>College</th><th>SMS base</th><th>Status</th><th>Score</th><th>Time</th><th>Tab switches</th><th>Registered</th><th></th></tr></thead><tbody>
+          ${list.length ? list.map((p) => `<tr><td><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.email)}</span></td><td class="num mono">${esc(p.phone)}</td><td class="num mono small" title="Birth day + last 4 digits">${esc((p.birthDay || "??") + p.phone.slice(-4))}</td><td class="num">${esc(p.bmdc || "")}</td><td class="small">${esc(p.institution || "")}</td><td>${p.inBase ? '<span class="pill good">in base</span>' : '<span class="pill">outside</span>'}</td>
             <td><span class="pill ${p.status === "completed" ? "good" : p.status === "in_progress" ? "warn" : ""}">${esc(p.status.replace("_", " "))}</span>${p.late ? ' <span class="pill bad">late</span>' : ""}</td>
             <td class="num">${p.status === "completed" ? `${p.score}/${p.total}` : ""}</td><td class="num">${p.status === "completed" ? mmss(p.timeTakenSec) : ""}</td><td class="num">${p.tabSwitches > 0 ? `<span class="pill ${p.tabSwitches > 3 ? "bad" : "warn"}">${p.tabSwitches}</span>` : "0"}</td><td class="small num">${fmtDate(p.registeredAt)}</td>
-            <td class="actions"><button class="btn sm" data-view="${p.id}" ${p.status === "completed" ? "" : "disabled"}>Answers</button> <button class="btn sm" data-pw="${p.id}">Password</button> ${p.status !== "registered" ? `<button class="btn sm" data-reset="${p.id}" title="Delete their attempt so they can take the quiz again">Reset attempt</button>` : ""} <button class="btn sm danger" data-del="${p.id}">Remove</button></td></tr>`).join("") : `<tr><td colspan="11" class="muted">No participants yet.</td></tr>`}
+            <td class="actions"><button class="btn sm" data-view="${p.id}" ${p.status === "completed" ? "" : "disabled"}>Answers</button> <button class="btn sm" data-pw="${p.id}">Password</button> ${p.status !== "registered" ? `<button class="btn sm" data-reset="${p.id}" title="Delete their attempt so they can take the quiz again">Reset attempt</button>` : ""} <button class="btn sm danger" data-del="${p.id}">Remove</button></td></tr>`).join("") : `<tr><td colspan="12" class="muted">No participants yet.</td></tr>`}
         </tbody></table></div>
-        <p class="small muted">Phone numbers are stored as 11 digits (01XXXXXXXXX), the same format as the SMS base, and exported as text so Excel keeps the leading zero. "Password" sets a new password for a doctor who forgot theirs. Tab switches count how often the quiz page was hidden during the attempt.</p></div>`;
+        <p class="small muted">Phone numbers are stored as 11 digits (01XXXXXXXXX), the same format as the SMS base, and exported as text so Excel keeps the leading zero. The Password column shows the standard password (birth day + last 4 digits) so you can remind a doctor over the phone; the "Password" button overrides it if someone typed the wrong birth day. Tab switches count how often the quiz page was hidden during the attempt.</p></div>`;
       let st; document.getElementById("pSearch").addEventListener("input", (e) => { clearTimeout(st); st = setTimeout(() => Admin.participants(el, e.target.value), 300); });
       el.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", async () => {
         if (await confirmBox({ title: "Remove participant?", body: "Their account, answers and ranking entry will be deleted.", okText: "Remove", danger: true })) { await Admin.guard(() => API.adminDeleteParticipant(Admin.token, b.dataset.del)); toast("Removed"); Admin.participants(el, q); }
@@ -608,7 +620,7 @@
       }));
       el.querySelectorAll("[data-pw]").forEach((b) => b.addEventListener("click", () => {
         const p = list.find((x) => x.id === b.dataset.pw);
-        const bg = modal(`<form id="pwForm" class="stack"><h2>New password for ${esc(p.name)}</h2><p class="small muted">Tell the doctor the new password by phone or SMS. They log in with ${esc(p.phone)}.</p><div class="field"><label for="np">New password</label><input class="input" id="np" minlength="6" required autocomplete="off"></div><div class="row end"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="submit">Set password</button></div></form>`);
+        const bg = modal(`<form id="pwForm" class="stack"><h2>New password for ${esc(p.name)}</h2><p class="small muted">Only needed if the doctor cannot log in with the standard password. Tell them the new one by phone or SMS. They log in with ${esc(p.phone)}.</p><div class="field"><label for="np">New password</label><input class="input" id="np" minlength="6" required autocomplete="off"></div><div class="row end"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="submit">Set password</button></div></form>`);
         bg.querySelector("#pwForm").addEventListener("submit", async (e) => { e.preventDefault(); await Admin.guard(() => API.adminSetParticipantPassword(Admin.token, p.id, bg.querySelector("#np").value)); bg.remove(); toast("Password updated"); });
       }));
       el.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", async () => {
@@ -665,7 +677,7 @@
         <form class="card stack" id="apForm">
           <h2>Start screen</h2>
           <div class="grid-2"><div class="field"><label for="sp_head">Headline</label><input class="input" id="sp_head" value="${esc(s.splashHeadline || "")}"></div><div class="field"><label for="sp_sub">Sub-line</label><input class="input" id="sp_sub" value="${esc(s.splashSub || "")}"></div></div>
-          <div class="field"><label>Background image</label>${imgField("sp_img", s.splashImage, "splash", "Recommended 1080 x 1920 px (portrait) or 1920 x 1080 px; under 1 MB loads fastest. A dark gradient is added automatically so the text stays readable. Without an image the animated AMR pattern is used.")}</div>
+          <div class="field"><label>Icon above the headline</label>${imgField("sp_img", s.splashIcon, "splash", "Replaces the drawn capsule on the start screen and the registration page. Use a square PNG with a transparent background, about 600 x 600 px, under 500 KB. The animated AMR pattern stays as the background.")}</div>
           <h2>Top banner</h2>
           <label class="check"><input type="checkbox" id="bt_on" ${top.enabled ? "checked" : ""}><span>Show a horizontal banner at the top of the participant pages</span></label>
           <div class="field"><label>Banner image</label>${imgField("bt_img", top.image, "banners", "Recommended 1200 x 300 px (4:1). Shown full width on phones.")}</div>
@@ -686,7 +698,7 @@
       el.querySelectorAll("[data-clear]").forEach((b) => b.addEventListener("click", () => { const id = b.dataset.clear; el.querySelector("#" + id).value = ""; el.querySelector("#" + id + "_prev").innerHTML = `<span class="small muted">Removed. Press Save appearance to apply.</span>`; }));
       document.getElementById("apForm").addEventListener("submit", async (e) => {
         e.preventDefault(); const g = (id) => el.querySelector("#" + id);
-        await Admin.guard(() => API.adminSaveSettings(Admin.token, { splashHeadline: g("sp_head").value.trim(), splashSub: g("sp_sub").value.trim(), splashImage: g("sp_img").value, bannerTop: { enabled: g("bt_on").checked, image: g("bt_img").value, link: g("bt_link").value.trim() }, bannerPopup: { enabled: g("bp_on").checked, image: g("bp_img").value, link: g("bp_link").value.trim(), seconds: Number(g("bp_sec").value) || 10 } }));
+        await Admin.guard(() => API.adminSaveSettings(Admin.token, { splashHeadline: g("sp_head").value.trim(), splashSub: g("sp_sub").value.trim(), splashIcon: g("sp_img").value, bannerTop: { enabled: g("bt_on").checked, image: g("bt_img").value, link: g("bt_link").value.trim() }, bannerPopup: { enabled: g("bp_on").checked, image: g("bp_img").value, link: g("bp_link").value.trim(), seconds: Number(g("bp_sec").value) || 10 } }));
         await Admin.refreshSettings(); toast("Appearance saved"); Admin.appearance(el);
       });
     },
