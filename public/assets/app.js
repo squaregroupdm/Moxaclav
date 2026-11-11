@@ -137,14 +137,14 @@
       if (!document.querySelector(".bgart")) document.body.insertAdjacentHTML("afterbegin", BG_ART);
       const sp = settings.splash || {};
       $app.innerHTML = `
-        <div class="splash">
+        <div class="splash poster">
           <div class="splash-bg"></div>
           <div class="splash-body">
-            <div class="splash-art">${splashIcon()}</div>
-            <span class="splash-kicker">${esc(settings.sponsor)} presents &middot; World AMR Awareness Week</span>
-            <h1>${esc(sp.headline || settings.campaignName)}</h1>
+            <span class="splash-kicker">World AMR Awareness Week &middot; 18 to 24 November</span>
+            <img class="splash-logo" src="${esc(logoUrl())}" alt="${esc(sp.headline || settings.campaignName)}">
             <p class="splash-sub">${esc(sp.sub || "")}</p>
-            ${settings.registrationOpen ? `<a class="btn primary hero-cta" href="#register">Register Now</a>` : `<button class="btn hero-cta" disabled>Registration closed</button>`}
+            <img class="splash-visual" src="${esc(visualUrl())}" alt="">
+            ${settings.registrationOpen ? `<a class="btn hero-cta gold" href="#register">Register Now</a>` : `<button class="btn hero-cta" disabled>Registration closed</button>`}
             <p class="splash-login">Already registered? <a href="#login">Log in</a></p>
           </div>
           <div class="splash-foot">
@@ -156,7 +156,10 @@
       document.getElementById("lnkTerms").addEventListener("click", (e) => { e.preventDefault(); showTerms(); });
     },
   };
-  function splashIcon(cls) { const ic = assetUrl((settings.splash || {}).icon); return ic ? `<img class="${cls || "hero-art"} hero-icon" src="${esc(ic)}" alt="">` : HERO_ART.replace('class="hero-art"', `class="${cls || "hero-art"}"`); }
+  const DEFAULT_IMG = window.BOI_DEFAULT_IMAGES || { logo: "assets/img/logo-amr-avengers.png", visual: "assets/img/shield-capsule.png" };
+  const logoUrl = () => assetUrl((settings.splash || {}).icon) || assetUrl(DEFAULT_IMG.logo);
+  const visualUrl = () => assetUrl((settings.splash || {}).visual) || assetUrl(DEFAULT_IMG.visual);
+  function splashIcon(cls) { return `<img class="${cls || "hero-art"} hero-icon" src="${esc(logoUrl())}" alt="${esc(settings.campaignName)}">`; }
   const Terms = {
     page() { shell(`<div class="card stack"><div class="row between"><h1 style="font-size:1.5rem">Terms and conditions</h1><a class="btn sm" href="#">Back</a></div><div class="terms-body">${esc(settings.terms)}</div></div>`, { right: userChip() }); bindLogout(); },
   };
@@ -165,21 +168,6 @@
   const Auth = {
     pwField(id, label, hint) {
       return `<div class="field"><label for="${id}">${label}</label><div class="pw-wrap"><input class="input" id="${id}" name="${id}" type="password" autocomplete="${id === "password" ? "new-password" : "current-password"}" required><button type="button" class="pw-toggle" data-pw="${id}">Show</button></div>${hint ? `<span class="hint">${hint}</span>` : ""}</div>`;
-    },
-    autocomplete(input, list, names) {
-      const render = () => {
-        const q = input.value.trim().toLowerCase();
-        if (!q) { list.hidden = true; return; }
-        const starts = names.filter((n) => n.toLowerCase().startsWith(q)); const contains = names.filter((n) => !n.toLowerCase().startsWith(q) && n.toLowerCase().includes(q));
-        const items = starts.concat(contains).slice(0, 12);
-        const exact = names.some((n) => n.toLowerCase() === q);
-        list.innerHTML = items.map((n) => `<button type="button" class="ac-item" data-v="${esc(n)}">${esc(n)}</button>`).join("") + (!exact && q.length >= 3 ? `<div class="ac-note">${items.length ? "Not in the list? Keep typing the full name." : `No match. Your college will be saved as "${esc(input.value.trim())}".`}</div>` : "");
-        list.hidden = !list.innerHTML;
-        list.querySelectorAll(".ac-item").forEach((b) => b.addEventListener("mousedown", (e) => { e.preventDefault(); input.value = b.dataset.v; list.hidden = true; input.dispatchEvent(new Event("change")); }));
-      };
-      input.addEventListener("input", render); input.addEventListener("focus", render);
-      input.addEventListener("blur", () => setTimeout(() => { list.hidden = true; }, 150));
-      input.addEventListener("keydown", (e) => { if (e.key === "Escape") list.hidden = true; if (e.key === "Enter" && !list.hidden) { const f = list.querySelector(".ac-item"); if (f && input.value.trim().toLowerCase() !== f.dataset.v.toLowerCase()) { e.preventDefault(); input.value = f.dataset.v; list.hidden = true; } } });
     },
     bindPw(root) { root.querySelectorAll("[data-pw]").forEach((b) => b.addEventListener("click", () => { const i = root.querySelector("#" + b.dataset.pw); i.type = i.type === "password" ? "text" : "password"; b.textContent = i.type === "password" ? "Show" : "Hide"; })); },
     showErrors(form, problems) {
@@ -207,7 +195,9 @@
               <div class="field"><label for="f_bmdc">BMDC registration number <span class="muted">(optional)</span></label><input class="input" id="f_bmdc" name="bmdc" placeholder="If you have one" autocomplete="off"><span class="hint">Leave blank if yours has not been issued yet.</span></div>
               <div class="field"><label for="f_bday">Day of the month you were born</label><input class="input" id="f_bday" name="birthDay" inputmode="numeric" maxlength="2" placeholder="e.g. 01 or 20" required><span class="hint">Just the day, two digits. It becomes part of your password.</span></div>
             </div>
-            <div class="field ac"><label for="f_inst">Medical college / hospital</label><input class="input" id="f_inst" name="institution" placeholder="Start typing the name, e.g. Dha..." autocomplete="off" required><div class="ac-list" id="instList" hidden></div><span class="hint">Pick from the list as you type. If yours is not there, just type the full name.</span></div>
+            <div class="field"><label for="f_inst">Medical college / hospital</label>
+              <select class="input" id="f_inst" name="institution" required><option value="">Select your medical college</option>${(settings.institutions || []).map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}<option value="__other">Other (not in the list)</option></select></div>
+            <div class="field" id="instOtherWrap" hidden><label for="f_inst_other">Name of your medical college</label><input class="input" id="f_inst_other" name="institutionOther" placeholder="Type the full name"></div>
             <div class="alert info" id="pwPreview"><b>Your password</b> will be your birth day followed by the last 4 digits of your mobile number. Fill in both fields above to see it.</div>
             <div class="field"><label class="check"><input type="checkbox" id="f_consent" name="consent" required><span>I confirm I am an intern doctor and I accept the <a href="#terms" id="lnkTerms2">terms and conditions</a>, including that my name and score may appear on the ranking board.</span></label></div>
             <button class="btn primary block" type="submit" id="btnStart">Create account</button>
@@ -217,7 +207,8 @@
       const form = document.getElementById("regForm"); if (!form) return;
       Auth.bindPw(form);
       document.getElementById("lnkTerms2").addEventListener("click", (e) => { e.preventDefault(); showTerms(); });
-      Auth.autocomplete(document.getElementById("f_inst"), document.getElementById("instList"), settings.institutions || []);
+      const instSel = document.getElementById("f_inst"), instOther = document.getElementById("instOtherWrap");
+      instSel.addEventListener("change", () => { instOther.hidden = instSel.value !== "__other"; if (!instOther.hidden) document.getElementById("f_inst_other").focus(); });
       const preview = () => { const bd = form.birthDay.value.replace(/\D/g, "").padStart(2, "0").slice(-2); const ph = form.phone.value.replace(/\D/g, ""); const el = document.getElementById("pwPreview"); if (/^(0[1-9]|[12]\d|3[01])$/.test(bd) && ph.length >= 4) el.innerHTML = `<b>Your password will be: <span class="mono" style="font-size:1.1em">${esc(bd + ph.slice(-4))}</span></b><br><span class="small">Birth day ${esc(bd)} + last 4 digits of your mobile number ${esc(ph.slice(-4))}. Please note it down.</span>`; else el.innerHTML = `<b>Your password</b> will be your birth day followed by the last 4 digits of your mobile number. Fill in both fields above to see it.`; };
       form.birthDay.addEventListener("input", preview); form.phone.addEventListener("input", preview);
       form.addEventListener("submit", async (e) => {
@@ -225,6 +216,8 @@
         const d = Object.fromEntries(new FormData(form).entries());
         d.consent = form.consent.checked;
         d.birthDay = (d.birthDay || "").replace(/\D/g, "").padStart(2, "0").slice(-2);
+        if (d.institution === "__other") d.institution = (d.institutionOther || "").trim();
+        delete d.institutionOther;
         const problems = Auth.validate(d);
         if (Object.keys(problems).length) { Auth.showErrors(form, problems); return; }
         const btn = document.getElementById("btnStart"); btn.disabled = true; btn.textContent = "Creating account...";
@@ -237,7 +230,7 @@
       if (!d.name || d.name.trim().length < 3) p.name = "Enter your full name.";
       if (!/^(\+?88)?01[3-9]\d{8}$/.test((d.phone || "").replace(/[\s-]/g, ""))) p.phone = "Enter an 11-digit Bangladeshi mobile number.";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((d.email || "").trim())) p.email = "Enter a valid email address.";
-      if (!d.institution || d.institution.trim().length < 3) p.institution = "Select or type your medical college.";
+      if (!d.institution || d.institution.trim().length < 3) p.institution = "Select your medical college, or choose Other and type it.";
       if (!/^(0[1-9]|[12]\d|3[01])$/.test(d.birthDay || "")) p.birthDay = "Enter the day of the month you were born, 01 to 31.";
       if (!d.consent) p.consent = "Please accept the terms and conditions to continue.";
       return p;
@@ -676,8 +669,9 @@
       el.innerHTML = `<div class="stack">
         <form class="card stack" id="apForm">
           <h2>Start screen</h2>
-          <div class="grid-2"><div class="field"><label for="sp_head">Headline</label><input class="input" id="sp_head" value="${esc(s.splashHeadline || "")}"></div><div class="field"><label for="sp_sub">Sub-line</label><input class="input" id="sp_sub" value="${esc(s.splashSub || "")}"></div></div>
-          <div class="field"><label>Icon above the headline</label>${imgField("sp_img", s.splashIcon, "splash", "Replaces the drawn capsule on the start screen and the registration page. Use a square PNG with a transparent background, about 600 x 600 px, under 500 KB. The animated AMR pattern stays as the background.")}</div>
+          <div class="grid-2"><div class="field"><label for="sp_head">Headline (used as the logo's alt text and page name)</label><input class="input" id="sp_head" value="${esc(s.splashHeadline || "")}"></div><div class="field"><label for="sp_sub">Sub-line under the logo</label><input class="input" id="sp_sub" value="${esc(s.splashSub || "")}"></div></div>
+          <div class="field"><label>Campaign logo</label>${imgField("sp_img", s.splashIcon, "splash", "Shown at the top of the start screen and on the registration page. PNG with a transparent background, about 1200 x 680 px, under 1 MB. Leave empty to use the built-in AMR Avengers logo.")}</div>
+          <div class="field"><label>Key visual (below the sub-line)</label>${imgField("sp_vis", s.splashVisual, "splash", "The shield-and-capsule picture. PNG with soft or transparent edges, about 800 x 600 px, under 1 MB. Leave empty to use the built-in one.")}</div>
           <h2>Top banner</h2>
           <label class="check"><input type="checkbox" id="bt_on" ${top.enabled ? "checked" : ""}><span>Show a horizontal banner at the top of the participant pages</span></label>
           <div class="field"><label>Banner image</label>${imgField("bt_img", top.image, "banners", "Recommended 1200 x 300 px (4:1). Shown full width on phones.")}</div>
@@ -698,7 +692,7 @@
       el.querySelectorAll("[data-clear]").forEach((b) => b.addEventListener("click", () => { const id = b.dataset.clear; el.querySelector("#" + id).value = ""; el.querySelector("#" + id + "_prev").innerHTML = `<span class="small muted">Removed. Press Save appearance to apply.</span>`; }));
       document.getElementById("apForm").addEventListener("submit", async (e) => {
         e.preventDefault(); const g = (id) => el.querySelector("#" + id);
-        await Admin.guard(() => API.adminSaveSettings(Admin.token, { splashHeadline: g("sp_head").value.trim(), splashSub: g("sp_sub").value.trim(), splashIcon: g("sp_img").value, bannerTop: { enabled: g("bt_on").checked, image: g("bt_img").value, link: g("bt_link").value.trim() }, bannerPopup: { enabled: g("bp_on").checked, image: g("bp_img").value, link: g("bp_link").value.trim(), seconds: Number(g("bp_sec").value) || 10 } }));
+        await Admin.guard(() => API.adminSaveSettings(Admin.token, { splashHeadline: g("sp_head").value.trim(), splashSub: g("sp_sub").value.trim(), splashIcon: g("sp_img").value, splashVisual: g("sp_vis").value, bannerTop: { enabled: g("bt_on").checked, image: g("bt_img").value, link: g("bt_link").value.trim() }, bannerPopup: { enabled: g("bp_on").checked, image: g("bp_img").value, link: g("bp_link").value.trim(), seconds: Number(g("bp_sec").value) || 10 } }));
         await Admin.refreshSettings(); toast("Appearance saved"); Admin.appearance(el);
       });
     },

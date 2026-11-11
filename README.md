@@ -15,8 +15,8 @@ Two ways to run it:
 
 | Feature | Detail |
 |---|---|
-| Start screen | Full-screen splash on the animated AMR pattern, with a replaceable icon above the headline (Admin > Splash & banners), one "Register Now" button, a "Log in" link, the five terms and conditions in the footer and a link to the full text. |
-| Accounts | Register once with name, mobile number (11 digits, 01XXXXXXXXX, the login ID), email, BMDC number (optional, free text), birth day (DD) and medical college (type-ahead list of 104 colleges, A to Z by what is typed; free text allowed). The password is standard for everyone: birth day + last 4 digits of the mobile number (born on the 20th, number ending 3344 = 203344). It is shown on the form before submitting and explained on the login page, so there is no forgot-password flow. Participants stay logged in on their device. Admin can still override a password. |
+| Start screen | Poster-style splash in the campaign's deep blue, with the "Moxaclav presents AMR Avengers" logo, the shield-and-capsule key visual, a gold "Register Now" button, a "Log in" link, the five terms and conditions in the footer and a link to the full text. Logo and key visual are replaceable from Admin > Splash & banners (`public/assets/img/` holds the defaults). |
+| Accounts | Register once with name, mobile number (11 digits, 01XXXXXXXXX, the login ID), email, BMDC number (optional, free text), birth day (DD) and medical college (drop-down of 104 colleges A to Z, plus "Other" with free text). The password is standard for everyone: birth day + last 4 digits of the mobile number (born on the 20th, number ending 3344 = 203344). It is shown on the form before submitting and explained on the login page, so there is no forgot-password flow. Participants stay logged in on their device. Admin can still override a password. |
 | Home page | After login: a "Thanks for registering" card with a large countdown to the scheduled start (or a placeholder until a date is set), then the Start button on the day; study materials; rules; ranking link. A horizontal banner on top and a pop-up banner (auto-closes after N seconds, closable) can be switched on from admin. |
 | Quiz gating | The Start button appears only when the quiz is open. Admin opens/closes it manually or schedules an open and close time; participants see a live countdown. |
 | Timed | 10 minutes by default (admin can change). The end time is fixed by the server when the quiz starts, so closing the tab does not pause it. The page auto-submits at 00:00. Timer turns amber at 2 minutes and red at 30 seconds. |
@@ -40,9 +40,9 @@ There is no link to the admin panel on the participant pages on purpose. Open it
 | Questions | Add, edit, hide or delete questions. Import from `.json` or `.csv` (append or replace all). Export all questions as JSON. |
 | Participants | Search by name, BMDC, phone, email or college. Password column (birth day + last 4) to remind a doctor by phone. "In base / outside" badge against the SMS base. View a participant's answer sheet, set a new password, reset their attempt, or remove them. Export participants CSV and the full answers CSV. Phone numbers are exported as 11-digit text (Excel keeps the leading zero). |
 | Study materials | Upload files (PDF, Excel, Word, PowerPoint, images) or add links; title, description, visible/hidden, reorder. |
-| Splash & banners | Start-screen headline, sub-line and icon image. Top banner (image, link, on/off). Pop-up banner (image, link, seconds, on/off). |
+| Splash & banners | Start-screen logo, key visual, headline and sub-line. Top banner (image, link, on/off). Pop-up banner (image, link, seconds, on/off). |
 | SMS base | Upload the SMS number list (.xlsx, .csv or .txt). Shows how many from the base registered and completed. Export the match report: every base number with registered / completed / score / rank, plus registrations from outside the base. |
-| Medical colleges | Add or remove colleges from the registration type-ahead list, or restore the built-in list of 104. |
+| Medical colleges | Add or remove colleges from the registration drop-down, or restore the built-in list of 104. |
 | Settings | Quiz access (manual open/close or scheduled start/end), registration open/closed, ranking board visible, show explanations after submission, duration, questions per attempt, shuffle, terms and conditions text, admin password, clear attempts, delete all participants. |
 
 ---|---|

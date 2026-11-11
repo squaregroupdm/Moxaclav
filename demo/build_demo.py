@@ -21,7 +21,13 @@ for m in materials:
     if f and f.is_file():
         m["size"] = f.stat().st_size
 ASSET_BASE = "https://squaregroupdm.github.io/BattleofInterns/public/"
+import base64
+def data_url(rel):
+    f = ROOT / "public" / rel
+    return "data:image/png;base64," + base64.b64encode(f.read_bytes()).decode()
+default_images = {"logo": data_url("assets/img/logo-amr-avengers.png"), "visual": data_url("assets/img/shield-capsule.png")}
 seed_js = ("window.BOI_ASSET_BASE = " + json.dumps(ASSET_BASE) + ";"
+           + "window.BOI_DEFAULT_IMAGES = " + json.dumps(default_images) + ";"
            + "window.BOI_SEED_QUESTIONS = " + json.dumps(questions, ensure_ascii=False).replace("</", "<\\/") + ";"
            + "window.BOI_SEED_INSTITUTIONS = " + json.dumps(institutions, ensure_ascii=False) + ";"
            + "window.BOI_SEED_MATERIALS = " + json.dumps(materials, ensure_ascii=False).replace("</", "<\\/") + ";")

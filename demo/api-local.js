@@ -12,7 +12,7 @@ window.BOI_API = (function () {
   const DEFAULT_TERMS = "1. Participation is open exclusively to medical doctors currently serving as interns in recognized medical colleges or hospitals in Bangladesh.\n2. Each participant can register and participate only once.\n3. The quiz must be completed within the stipulated time using a personal internet-enabled device.\n4. Winners will be selected based on scores and completion time. The organizer's decision will be final.\n5. The organizer reserves the right to disqualify participants for unfair practices and modify or cancel the campaign if necessary.";
   const defaultSettings = () => ({ campaignName: "Battle of Interns", sponsor: "Moxaclav", durationSec: 600, questionCount: 25, shuffle: true, leaderboardPublic: true, showExplanations: true, registrationOpen: true,
     quizMode: "manual", quizOpen: true, quizStartAt: null, quizEndAt: null,
-    splashIcon: "", splashHeadline: "Battle of Interns", splashSub: "An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.",
+    splashIcon: "", splashVisual: "", splashHeadline: "Battle of Interns", splashSub: "An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.",
     bannerTop: { enabled: false, image: "", link: "" }, bannerPopup: { enabled: false, image: "", link: "", seconds: 10 }, terms: DEFAULT_TERMS });
   const seedMaterials = () => (window.BOI_SEED_MATERIALS || []).map((m, i) => ({ id: "m" + (i + 1), title: m.title, description: m.description || "", url: m.url || ((window.BOI_ASSET_BASE || "") + "materials/" + m.file), type: m.type || "link", size: m.size || null, visible: true, createdAt: Date.now() }));
 
@@ -50,7 +50,7 @@ window.BOI_API = (function () {
   function publicSettings(db) {
     const s = db.settings; const ac = db.questions.filter((q) => q.active).length;
     return { campaignName: s.campaignName, sponsor: s.sponsor, durationSec: s.durationSec, questionCount: ac ? Math.min(s.questionCount, ac) : s.questionCount, leaderboardPublic: s.leaderboardPublic, showExplanations: s.showExplanations !== false, registrationOpen: s.registrationOpen !== false,
-      quiz: Object.assign(quizState(s), { serverNow: Date.now() }), splash: { icon: s.splashIcon || "", headline: s.splashHeadline, sub: s.splashSub }, banners: { top: s.bannerTop, popup: s.bannerPopup }, terms: s.terms || DEFAULT_TERMS, institutions: sortedInst(db.institutions || []), demo: true };
+      quiz: Object.assign(quizState(s), { serverNow: Date.now() }), splash: { icon: s.splashIcon || "", visual: s.splashVisual || "", headline: s.splashHeadline, sub: s.splashSub }, banners: { top: s.bannerTop, popup: s.bannerPopup }, terms: s.terms || DEFAULT_TERMS, institutions: sortedInst(db.institutions || []), demo: true };
   }
   function scoreAttempt(db, a) {
     let correct = 0, wrong = 0, skipped = 0;

@@ -59,7 +59,7 @@ function default_settings(): array {
     return ['campaignName' => 'Battle of Interns', 'sponsor' => 'Moxaclav', 'durationSec' => 600, 'questionCount' => 25, 'shuffle' => true,
         'leaderboardPublic' => true, 'showExplanations' => true, 'registrationOpen' => true,
         'quizMode' => 'manual', 'quizOpen' => false, 'quizStartAt' => null, 'quizEndAt' => null,
-        'splashIcon' => '', 'splashHeadline' => 'Battle of Interns', 'splashSub' => 'An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.',
+        'splashIcon' => '', 'splashVisual' => '', 'splashHeadline' => 'Battle of Interns', 'splashSub' => 'An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.',
         'bannerTop' => ['enabled' => false, 'image' => '', 'link' => ''], 'bannerPopup' => ['enabled' => false, 'image' => '', 'link' => '', 'seconds' => 10],
         'terms' => default_terms()];
 }
@@ -113,7 +113,7 @@ function public_settings(): array {
     $qc = (int) setting('questionCount', 25); $ac = active_count();
     return ['campaignName' => setting('campaignName'), 'sponsor' => setting('sponsor'), 'durationSec' => (int) setting('durationSec', 600), 'questionCount' => $ac ? min($qc, $ac) : $qc,
         'leaderboardPublic' => (bool) setting('leaderboardPublic'), 'showExplanations' => setting('showExplanations', true) !== false, 'registrationOpen' => setting('registrationOpen', true) !== false,
-        'quiz' => quiz_state() + ['serverNow' => now_ms()], 'splash' => ['icon' => (string) setting('splashIcon', ''), 'headline' => (string) setting('splashHeadline', 'Battle of Interns'), 'sub' => (string) setting('splashSub', '')],
+        'quiz' => quiz_state() + ['serverNow' => now_ms()], 'splash' => ['icon' => (string) setting('splashIcon', ''), 'visual' => (string) setting('splashVisual', ''), 'headline' => (string) setting('splashHeadline', 'Battle of Interns'), 'sub' => (string) setting('splashSub', '')],
         'banners' => ['top' => setting('bannerTop') ?: default_settings()['bannerTop'], 'popup' => setting('bannerPopup') ?: default_settings()['bannerPopup']],
         'terms' => (string) setting('terms', default_terms()), 'institutions' => institutions(), 'demo' => false];
 }
@@ -436,7 +436,7 @@ switch ($route) {
     case 'admin/settings-save': {
         require_admin();
         $allowed = ['campaignName' => 'string', 'sponsor' => 'string', 'durationSec' => 'int', 'questionCount' => 'int', 'shuffle' => 'bool', 'leaderboardPublic' => 'bool', 'showExplanations' => 'bool', 'registrationOpen' => 'bool',
-            'quizMode' => 'string', 'quizOpen' => 'bool', 'quizStartAt' => 'int?', 'quizEndAt' => 'int?', 'splashIcon' => 'string', 'splashHeadline' => 'string', 'splashSub' => 'text', 'terms' => 'text', 'bannerTop' => 'banner', 'bannerPopup' => 'banner'];
+            'quizMode' => 'string', 'quizOpen' => 'bool', 'quizStartAt' => 'int?', 'quizEndAt' => 'int?', 'splashIcon' => 'string', 'splashVisual' => 'string', 'splashHeadline' => 'string', 'splashSub' => 'text', 'terms' => 'text', 'bannerTop' => 'banner', 'bannerPopup' => 'banner'];
         foreach ($allowed as $k => $type) {
             if (!array_key_exists($k, $in)) continue; $v = $in[$k];
             if ($type === 'string') $v = mb_substr(s($v), 0, 300); elseif ($type === 'text') $v = mb_substr(s($v), 0, 5000); elseif ($type === 'int') $v = max(1, (int) $v); elseif ($type === 'int?') $v = $v === null || $v === '' ? null : (int) $v;
