@@ -2,7 +2,7 @@
    localStorage. Used only for the standalone demo page. Nothing is sent anywhere. */
 window.BOI_API = (function () {
   "use strict";
-  const KEY = "boi_demo_v4";
+  const KEY = "boi_demo_v5";
   const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   const delay = (v) => new Promise((r) => setTimeout(() => r(v), 120));
   const fail = (m) => { throw new Error(m); };
@@ -12,7 +12,7 @@ window.BOI_API = (function () {
   const DEFAULT_TERMS = "1. Participation is open exclusively to medical doctors currently serving as interns in recognized medical colleges or hospitals in Bangladesh.\n2. Each participant can register and participate only once.\n3. The quiz must be completed within the stipulated time using a personal internet-enabled device.\n4. Winners will be selected based on scores and completion time. The organizer's decision will be final.\n5. The organizer reserves the right to disqualify participants for unfair practices and modify or cancel the campaign if necessary.";
   const defaultSettings = () => ({ campaignName: "Battle of Interns", sponsor: "Moxaclav", durationSec: 600, questionCount: 25, shuffle: true, leaderboardPublic: true, showExplanations: true, registrationOpen: true,
     quizMode: "manual", quizOpen: true, quizStartAt: null, quizEndAt: null,
-    splashIcon: "", splashVisual: "", splashHeadline: "Battle of Interns", splashSub: "An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.",
+    splashIcon: "", splashVisual: "", splashKicker: "World AMR Awareness Week · 18 to 24 November", splashCta: "Register Now", splashTheme: {}, splashHeadline: "Battle of Interns", splashSub: "An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.",
     bannerTop: { enabled: false, image: "", link: "" }, bannerPopup: { enabled: false, image: "", link: "", seconds: 10 }, terms: DEFAULT_TERMS });
   const seedMaterials = () => (window.BOI_SEED_MATERIALS || []).map((m, i) => ({ id: "m" + (i + 1), title: m.title, description: m.description || "", url: m.url || ((window.BOI_ASSET_BASE || "") + "materials/" + m.file), type: m.type || "link", size: m.size || null, visible: true, createdAt: Date.now() }));
 
@@ -20,7 +20,7 @@ window.BOI_API = (function () {
     const questions = (window.BOI_SEED_QUESTIONS || []).map((q, i) => ({ id: "q" + (i + 1), text: q.text, options: q.options, correct: q.correct, explanation: q.explanation, active: true }));
     const db = { settings: defaultSettings(), adminPassword: "admin123", questions, participants: [], attempts: [], institutions: (window.BOI_SEED_INSTITUTIONS || []).slice(), materials: seedMaterials(), smsBase: [] };
     // A few sample finishers so the ranking board is not empty in the demo. Admin > Settings > Delete all participants removes them.
-    const samples = [["Dr. Tanvir Ahmed", "Dhaka Medical College, Dhaka", 23, 412], ["Dr. Nusrat Jahan", "Sir Salimullah Medical College, Dhaka", 22, 388], ["Dr. Rafiul Islam", "Chittagong Medical College, Chattogram", 22, 455], ["Dr. Farhana Haque", "Mymensingh Medical College, Mymensingh", 20, 501], ["Dr. Sabbir Hossain", "Rajshahi Medical College, Rajshahi", 18, 530], ["Dr. Mehzabin Chowdhury", "Sylhet MAG Osmani Medical College, Sylhet", 15, 572]];
+    const samples = [["Dr. Tanvir Ahmed", "Dhaka Medical College Hospital (DMCH)", 23, 412], ["Dr. Nusrat Jahan", "Sir Salimullah Medical College Hospital", 22, 388], ["Dr. Rafiul Islam", "Chittagong Medical College Hospital", 22, 455], ["Dr. Farhana Haque", "Mymensingh Medical College Hospital", 20, 501], ["Dr. Sabbir Hossain", "Rajshahi Medical College & Hospital", 18, 530], ["Dr. Mehzabin Chowdhury", "Sylhet MAG Osmani Medical College Hospital", 15, 572]];
     samples.forEach(([name, inst, score, secs], i) => {
       const pid = "sample" + i, now = Date.now() - (i + 1) * 3600 * 1000;
       const ph = "017000000" + (10 + i); db.participants.push({ id: pid, token: "t_" + pid, name, email: "sample" + (i + 1) + "@example.com", bmdc: "A-" + (100001 + i), phone: ph, institution: inst, birthDay: "15", password: "15" + ph.slice(-4), registeredAt: now, lastLoginAt: now });
@@ -50,7 +50,7 @@ window.BOI_API = (function () {
   function publicSettings(db) {
     const s = db.settings; const ac = db.questions.filter((q) => q.active).length;
     return { campaignName: s.campaignName, sponsor: s.sponsor, durationSec: s.durationSec, questionCount: ac ? Math.min(s.questionCount, ac) : s.questionCount, leaderboardPublic: s.leaderboardPublic, showExplanations: s.showExplanations !== false, registrationOpen: s.registrationOpen !== false,
-      quiz: Object.assign(quizState(s), { serverNow: Date.now() }), splash: { icon: s.splashIcon || "", visual: s.splashVisual || "", headline: s.splashHeadline, sub: s.splashSub }, banners: { top: s.bannerTop, popup: s.bannerPopup }, terms: s.terms || DEFAULT_TERMS, institutions: sortedInst(db.institutions || []), demo: true };
+      quiz: Object.assign(quizState(s), { serverNow: Date.now() }), splash: { icon: s.splashIcon || "", visual: s.splashVisual || "", kicker: s.splashKicker, cta: s.splashCta || "Register Now", theme: s.splashTheme || {}, headline: s.splashHeadline, sub: s.splashSub }, banners: { top: s.bannerTop, popup: s.bannerPopup }, terms: s.terms || DEFAULT_TERMS, institutions: sortedInst(db.institutions || []), demo: true };
   }
   function scoreAttempt(db, a) {
     let correct = 0, wrong = 0, skipped = 0;

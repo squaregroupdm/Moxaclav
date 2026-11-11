@@ -273,7 +273,8 @@ td.actions { white-space: nowrap; }
 
 /* ---------- Splash ---------- */
 .splash { position: relative; min-height: calc(100vh - 0px); min-height: 100dvh; display: flex; flex-direction: column; color: var(--fg); }
-.splash-bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
+.splash-bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; overflow: hidden; }
+.splash { overflow: hidden; }
 .splash-bg.has-image::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 24, 40, 0.25) 0%, rgba(8, 24, 40, 0.62) 60%, rgba(8, 24, 40, 0.92) 100%); }
 .splash.has-image { color: #ffffff; }
 .splash-body { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 48px 16px 24px; gap: 18px; }
@@ -339,15 +340,16 @@ td.actions { white-space: nowrap; }
 
 /* Poster-style splash */
 .splash.poster { color: #ffffff; }
-.splash.poster .splash-bg { background: radial-gradient(120% 70% at 50% 0%, #1d5fb8 0%, #123c8f 45%, #0b2a6a 100%); }
+.splash.poster { --sp-bg1: #1d5fb8; --sp-bg2: #123c8f; --sp-bg3: #0b2a6a; --sp-cta1: #ffd969; --sp-cta2: #f5b72b; --sp-cta-text: #0b2a6a; }
+.splash.poster .splash-bg { background: radial-gradient(120% 70% at 50% 0%, var(--sp-bg1) 0%, var(--sp-bg2) 45%, var(--sp-bg3) 100%); }
 .splash.poster .splash-bg::before { content: ""; position: absolute; inset: 0; background: radial-gradient(45% 30% at 50% 58%, rgba(99, 190, 255, 0.35) 0%, rgba(99, 190, 255, 0) 70%), radial-gradient(60% 40% at 50% 100%, rgba(8, 20, 50, 0.6) 0%, rgba(8, 20, 50, 0) 70%); }
 .splash.poster .splash-bg::after { content: ""; position: absolute; width: 170vmax; height: 170vmax; left: -158vmax; top: -40vmax; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.28); box-shadow: 0 0 30px rgba(255, 255, 255, 0.12); pointer-events: none; }
 body.splash-mode .bgart { color: #9fd3ff; opacity: 0.22; }
-.splash-logo { width: min(560px, 92vw); height: auto; filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.35)); }
-.splash-visual { width: min(420px, 86vw); height: auto; margin-top: -6px; filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.35)); }
+.splash-logo { width: min(var(--sp-logo, 560px), 92vw); height: auto; filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.35)); }
+.splash-visual { width: min(var(--sp-visual, 420px), 86vw); height: auto; margin-top: -6px; filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.35)); }
 .splash.poster .splash-kicker { color: #bfe3ff; }
 .splash.poster .splash-sub { color: #ffffff; font-size: 1.05rem; font-weight: 500; max-width: 40ch; }
-.splash.poster .btn.hero-cta.gold { background: linear-gradient(180deg, #ffd969 0%, #f5b72b 100%); color: #0b2a6a; border-color: #f5b72b; box-shadow: 0 10px 30px rgba(245, 183, 43, 0.35); font-size: 1.15rem; padding: 16px 44px; }
+.splash.poster .btn.hero-cta.gold { background: linear-gradient(180deg, var(--sp-cta1) 0%, var(--sp-cta2) 100%); color: var(--sp-cta-text); border-color: var(--sp-cta2); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); font-size: 1.15rem; padding: 16px 44px; }
 .splash.poster .btn.hero-cta.gold:hover { filter: brightness(1.05); }
 .splash.poster .splash-login { color: #d9ecff; }
 .splash.poster .splash-login a { color: #ffffff; }
@@ -356,6 +358,16 @@ body.splash-mode .bgart { color: #9fd3ff; opacity: 0.22; }
 .splash.poster .splash-foot .foot-row { border-top-color: rgba(255, 255, 255, 0.25); }
 .splash.poster .demo-badge { background: rgba(255, 217, 105, 0.2); color: #ffd969; }
 .splash.poster .splash-body { gap: 14px; padding-top: 28px; }
+@media (min-width: 1000px) {
+  .splash.poster .splash-body { display: grid; grid-template-columns: 1fr 1fr; grid-template-areas: "kicker kicker" "logo visual" "sub visual" "cta visual" "login visual"; column-gap: 32px; row-gap: 14px; align-content: center; justify-items: center; max-width: 1100px; margin: 0 auto; width: 100%; padding-top: 24px; }
+  .splash.poster .splash-kicker { grid-area: kicker; }
+  .splash.poster .splash-logo { grid-area: logo; align-self: end; }
+  .splash.poster .splash-sub { grid-area: sub; }
+  .splash.poster .btn.hero-cta { grid-area: cta; }
+  .splash.poster .splash-login { grid-area: login; align-self: start; }
+  .splash.poster .splash-visual { grid-area: visual; align-self: center; width: min(var(--sp-visual, 420px), 44vw); margin-top: 0; }
+  .splash.poster h1 { grid-area: logo; }
+}
 @media (prefers-reduced-motion: no-preference) { .splash-visual { animation: hover 6s ease-in-out infinite alternate; } }
 @keyframes hover { from { transform: translateY(0); } to { transform: translateY(-10px); } }
 .hero .hero-icon { width: 150px; }
@@ -386,7 +398,7 @@ body.splash-mode .bgart { color: #9fd3ff; opacity: 0.22; }
    localStorage. Used only for the standalone demo page. Nothing is sent anywhere. */
 window.BOI_API = (function () {
   "use strict";
-  const KEY = "boi_demo_v4";
+  const KEY = "boi_demo_v5";
   const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   const delay = (v) => new Promise((r) => setTimeout(() => r(v), 120));
   const fail = (m) => { throw new Error(m); };
@@ -396,7 +408,7 @@ window.BOI_API = (function () {
   const DEFAULT_TERMS = "1. Participation is open exclusively to medical doctors currently serving as interns in recognized medical colleges or hospitals in Bangladesh.\n2. Each participant can register and participate only once.\n3. The quiz must be completed within the stipulated time using a personal internet-enabled device.\n4. Winners will be selected based on scores and completion time. The organizer's decision will be final.\n5. The organizer reserves the right to disqualify participants for unfair practices and modify or cancel the campaign if necessary.";
   const defaultSettings = () => ({ campaignName: "Battle of Interns", sponsor: "Moxaclav", durationSec: 600, questionCount: 25, shuffle: true, leaderboardPublic: true, showExplanations: true, registrationOpen: true,
     quizMode: "manual", quizOpen: true, quizStartAt: null, quizEndAt: null,
-    splashIcon: "", splashVisual: "", splashHeadline: "Battle of Interns", splashSub: "An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.",
+    splashIcon: "", splashVisual: "", splashKicker: "World AMR Awareness Week · 18 to 24 November", splashCta: "Register Now", splashTheme: {}, splashHeadline: "Battle of Interns", splashSub: "An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.",
     bannerTop: { enabled: false, image: "", link: "" }, bannerPopup: { enabled: false, image: "", link: "", seconds: 10 }, terms: DEFAULT_TERMS });
   const seedMaterials = () => (window.BOI_SEED_MATERIALS || []).map((m, i) => ({ id: "m" + (i + 1), title: m.title, description: m.description || "", url: m.url || ((window.BOI_ASSET_BASE || "") + "materials/" + m.file), type: m.type || "link", size: m.size || null, visible: true, createdAt: Date.now() }));
 
@@ -404,7 +416,7 @@ window.BOI_API = (function () {
     const questions = (window.BOI_SEED_QUESTIONS || []).map((q, i) => ({ id: "q" + (i + 1), text: q.text, options: q.options, correct: q.correct, explanation: q.explanation, active: true }));
     const db = { settings: defaultSettings(), adminPassword: "admin123", questions, participants: [], attempts: [], institutions: (window.BOI_SEED_INSTITUTIONS || []).slice(), materials: seedMaterials(), smsBase: [] };
     // A few sample finishers so the ranking board is not empty in the demo. Admin > Settings > Delete all participants removes them.
-    const samples = [["Dr. Tanvir Ahmed", "Dhaka Medical College, Dhaka", 23, 412], ["Dr. Nusrat Jahan", "Sir Salimullah Medical College, Dhaka", 22, 388], ["Dr. Rafiul Islam", "Chittagong Medical College, Chattogram", 22, 455], ["Dr. Farhana Haque", "Mymensingh Medical College, Mymensingh", 20, 501], ["Dr. Sabbir Hossain", "Rajshahi Medical College, Rajshahi", 18, 530], ["Dr. Mehzabin Chowdhury", "Sylhet MAG Osmani Medical College, Sylhet", 15, 572]];
+    const samples = [["Dr. Tanvir Ahmed", "Dhaka Medical College Hospital (DMCH)", 23, 412], ["Dr. Nusrat Jahan", "Sir Salimullah Medical College Hospital", 22, 388], ["Dr. Rafiul Islam", "Chittagong Medical College Hospital", 22, 455], ["Dr. Farhana Haque", "Mymensingh Medical College Hospital", 20, 501], ["Dr. Sabbir Hossain", "Rajshahi Medical College & Hospital", 18, 530], ["Dr. Mehzabin Chowdhury", "Sylhet MAG Osmani Medical College Hospital", 15, 572]];
     samples.forEach(([name, inst, score, secs], i) => {
       const pid = "sample" + i, now = Date.now() - (i + 1) * 3600 * 1000;
       const ph = "017000000" + (10 + i); db.participants.push({ id: pid, token: "t_" + pid, name, email: "sample" + (i + 1) + "@example.com", bmdc: "A-" + (100001 + i), phone: ph, institution: inst, birthDay: "15", password: "15" + ph.slice(-4), registeredAt: now, lastLoginAt: now });
@@ -434,7 +446,7 @@ window.BOI_API = (function () {
   function publicSettings(db) {
     const s = db.settings; const ac = db.questions.filter((q) => q.active).length;
     return { campaignName: s.campaignName, sponsor: s.sponsor, durationSec: s.durationSec, questionCount: ac ? Math.min(s.questionCount, ac) : s.questionCount, leaderboardPublic: s.leaderboardPublic, showExplanations: s.showExplanations !== false, registrationOpen: s.registrationOpen !== false,
-      quiz: Object.assign(quizState(s), { serverNow: Date.now() }), splash: { icon: s.splashIcon || "", visual: s.splashVisual || "", headline: s.splashHeadline, sub: s.splashSub }, banners: { top: s.bannerTop, popup: s.bannerPopup }, terms: s.terms || DEFAULT_TERMS, institutions: sortedInst(db.institutions || []), demo: true };
+      quiz: Object.assign(quizState(s), { serverNow: Date.now() }), splash: { icon: s.splashIcon || "", visual: s.splashVisual || "", kicker: s.splashKicker, cta: s.splashCta || "Register Now", theme: s.splashTheme || {}, headline: s.splashHeadline, sub: s.splashSub }, banners: { top: s.bannerTop, popup: s.bannerPopup }, terms: s.terms || DEFAULT_TERMS, institutions: sortedInst(db.institutions || []), demo: true };
   }
   function scoreAttempt(db, a) {
     let correct = 0, wrong = 0, skipped = 0;
@@ -740,15 +752,17 @@ window.BOI_API = (function () {
     mount() {
       if (!document.querySelector(".bgart")) document.body.insertAdjacentHTML("afterbegin", BG_ART);
       const sp = settings.splash || {};
+      const th = sp.theme || {};
+      const vars = [["--sp-bg1", th.bg1], ["--sp-bg2", th.bg2], ["--sp-bg3", th.bg3], ["--sp-cta1", th.cta1], ["--sp-cta2", th.cta2], ["--sp-cta-text", th.ctaText], ["--sp-logo", th.logoWidth ? th.logoWidth + "px" : ""], ["--sp-visual", th.visualWidth ? th.visualWidth + "px" : ""]].filter(([, v]) => v).map(([k, v]) => `${k}:${esc(v)}`).join(";");
       $app.innerHTML = `
-        <div class="splash poster">
+        <div class="splash poster" style="${vars}">
           <div class="splash-bg"></div>
           <div class="splash-body">
-            <span class="splash-kicker">World AMR Awareness Week &middot; 18 to 24 November</span>
-            <img class="splash-logo" src="${esc(logoUrl())}" alt="${esc(sp.headline || settings.campaignName)}">
-            <p class="splash-sub">${esc(sp.sub || "")}</p>
-            <img class="splash-visual" src="${esc(visualUrl())}" alt="">
-            ${settings.registrationOpen ? `<a class="btn hero-cta gold" href="#register">Register Now</a>` : `<button class="btn hero-cta" disabled>Registration closed</button>`}
+            ${sp.kicker !== "" ? `<span class="splash-kicker">${esc(sp.kicker || "World AMR Awareness Week · 18 to 24 November")}</span>` : ""}
+            ${th.hideLogo ? `<h1>${esc(sp.headline || settings.campaignName)}</h1>` : `<img class="splash-logo" src="${esc(logoUrl())}" alt="${esc(sp.headline || settings.campaignName)}">`}
+            ${sp.sub ? `<p class="splash-sub">${esc(sp.sub)}</p>` : ""}
+            ${th.hideVisual ? "" : `<img class="splash-visual" src="${esc(visualUrl())}" alt="">`}
+            ${settings.registrationOpen ? `<a class="btn hero-cta gold" href="#register">${esc(sp.cta || "Register Now")}</a>` : `<button class="btn hero-cta" disabled>Registration closed</button>`}
             <p class="splash-login">Already registered? <a href="#login">Log in</a></p>
           </div>
           <div class="splash-foot">
@@ -1268,12 +1282,30 @@ window.BOI_API = (function () {
 
     async appearance(el) {
       const s = await Admin.guard(() => API.adminSettings(Admin.token));
-      const top = s.bannerTop || {}, pop = s.bannerPopup || {};
-      const imgField = (id, url, kind, hint) => `<div class="stack-sm"><div id="${id}_prev">${url ? `<img class="img-preview" src="${esc(assetUrl(url))}" alt="">` : `<span class="small muted">No image yet.</span>`}</div><div class="row"><input type="file" class="input" id="${id}_file" accept=".png,.jpg,.jpeg,.webp,.gif" style="max-width:320px"><button class="btn sm" type="button" data-upload="${id}" data-kind="${kind}">Upload</button>${url ? `<button class="btn sm ghost" type="button" data-clear="${id}">Remove</button>` : ""}</div><input type="hidden" id="${id}" value="${esc(url || "")}"><span class="hint">${hint}</span></div>`;
+      const top = s.bannerTop || {}, pop = s.bannerPopup || {}, th = s.splashTheme || {};
+      const builtIn = { sp_img: DEFAULT_IMG.logo, sp_vis: DEFAULT_IMG.visual };
+      const imgField = (id, url, kind, hint) => `<div class="stack-sm"><div id="${id}_prev">${url ? `<img class="img-preview" src="${esc(assetUrl(url))}" alt="">` : builtIn[id] ? `<img class="img-preview" style="background:#123c8f;padding:8px" src="${esc(assetUrl(builtIn[id]))}" alt=""><span class="small muted">Built-in default in use.</span>` : `<span class="small muted">No image yet.</span>`}</div><div class="row"><input type="file" class="input" id="${id}_file" accept=".png,.jpg,.jpeg,.webp,.gif" style="max-width:320px"><button class="btn sm" type="button" data-upload="${id}" data-kind="${kind}">Upload</button>${url ? `<button class="btn sm ghost" type="button" data-clear="${id}">Remove</button>` : ""}</div><input type="hidden" id="${id}" value="${esc(url || "")}"><span class="hint">${hint}</span></div>`;
       el.innerHTML = `<div class="stack">
         <form class="card stack" id="apForm">
           <h2>Start screen</h2>
-          <div class="grid-2"><div class="field"><label for="sp_head">Headline (used as the logo's alt text and page name)</label><input class="input" id="sp_head" value="${esc(s.splashHeadline || "")}"></div><div class="field"><label for="sp_sub">Sub-line under the logo</label><input class="input" id="sp_sub" value="${esc(s.splashSub || "")}"></div></div>
+          <div class="grid-2">
+            <div class="field"><label for="sp_kicker">Small line above the logo</label><input class="input" id="sp_kicker" value="${esc(s.splashKicker ?? "World AMR Awareness Week · 18 to 24 November")}" placeholder="Leave empty to hide"></div>
+            <div class="field"><label for="sp_head">Headline (shown if the logo is hidden; also the page name)</label><input class="input" id="sp_head" value="${esc(s.splashHeadline || "")}"></div>
+            <div class="field"><label for="sp_sub">Sub-line under the logo</label><input class="input" id="sp_sub" value="${esc(s.splashSub || "")}" placeholder="Leave empty to hide"></div>
+            <div class="field"><label for="sp_cta">Button text</label><input class="input" id="sp_cta" value="${esc(s.splashCta || "Register Now")}"></div>
+          </div>
+          <div class="grid-4">
+            <div class="field"><label for="th_bg1">Background top</label><input class="input" type="color" id="th_bg1" value="${esc(th.bg1 || "#1d5fb8")}"></div>
+            <div class="field"><label for="th_bg2">Background middle</label><input class="input" type="color" id="th_bg2" value="${esc(th.bg2 || "#123c8f")}"></div>
+            <div class="field"><label for="th_bg3">Background bottom</label><input class="input" type="color" id="th_bg3" value="${esc(th.bg3 || "#0b2a6a")}"></div>
+            <div class="field"><label for="th_ctatext">Button text colour</label><input class="input" type="color" id="th_ctatext" value="${esc(th.ctaText || "#0b2a6a")}"></div>
+            <div class="field"><label for="th_cta1">Button colour (top)</label><input class="input" type="color" id="th_cta1" value="${esc(th.cta1 || "#ffd969")}"></div>
+            <div class="field"><label for="th_cta2">Button colour (bottom)</label><input class="input" type="color" id="th_cta2" value="${esc(th.cta2 || "#f5b72b")}"></div>
+            <div class="field"><label for="th_logow">Logo width (px, desktop)</label><input class="input" type="number" id="th_logow" min="200" max="900" value="${esc(th.logoWidth || 560)}"></div>
+            <div class="field"><label for="th_visw">Key visual width (px, desktop)</label><input class="input" type="number" id="th_visw" min="200" max="900" value="${esc(th.visualWidth || 420)}"></div>
+          </div>
+          <div class="row"><label class="check"><input type="checkbox" id="th_hidelogo" ${th.hideLogo ? "checked" : ""}><span>Hide the logo and show the headline as text instead</span></label><label class="check"><input type="checkbox" id="th_hidevis" ${th.hideVisual ? "checked" : ""}><span>Hide the key visual</span></label></div>
+          <div class="row"><button class="btn sm" type="button" id="th_reset">Reset colours and sizes to the poster defaults</button></div>
           <div class="field"><label>Campaign logo</label>${imgField("sp_img", s.splashIcon, "splash", "Shown at the top of the start screen and on the registration page. PNG with a transparent background, about 1200 x 680 px, under 1 MB. Leave empty to use the built-in AMR Avengers logo.")}</div>
           <div class="field"><label>Key visual (below the sub-line)</label>${imgField("sp_vis", s.splashVisual, "splash", "The shield-and-capsule picture. PNG with soft or transparent edges, about 800 x 600 px, under 1 MB. Leave empty to use the built-in one.")}</div>
           <h2>Top banner</h2>
@@ -1293,10 +1325,12 @@ window.BOI_API = (function () {
         catch (ex) { toast(ex.message); }
         b.disabled = false; b.textContent = "Upload";
       }));
-      el.querySelectorAll("[data-clear]").forEach((b) => b.addEventListener("click", () => { const id = b.dataset.clear; el.querySelector("#" + id).value = ""; el.querySelector("#" + id + "_prev").innerHTML = `<span class="small muted">Removed. Press Save appearance to apply.</span>`; }));
+      el.querySelector("#th_reset").addEventListener("click", () => { const d = { th_bg1: "#1d5fb8", th_bg2: "#123c8f", th_bg3: "#0b2a6a", th_cta1: "#ffd969", th_cta2: "#f5b72b", th_ctatext: "#0b2a6a", th_logow: 560, th_visw: 420 }; Object.entries(d).forEach(([k, v]) => { el.querySelector("#" + k).value = v; }); el.querySelector("#th_hidelogo").checked = false; el.querySelector("#th_hidevis").checked = false; toast("Defaults restored. Press Save appearance to apply."); });
+      el.querySelectorAll("[data-clear]").forEach((b) => b.addEventListener("click", () => { const id = b.dataset.clear; el.querySelector("#" + id).value = ""; el.querySelector("#" + id + "_prev").innerHTML = `<span class="small muted">Removed${builtIn[id] ? ", the built-in default will be used" : ""}. Press Save appearance to apply.</span>`; }));
       document.getElementById("apForm").addEventListener("submit", async (e) => {
         e.preventDefault(); const g = (id) => el.querySelector("#" + id);
-        await Admin.guard(() => API.adminSaveSettings(Admin.token, { splashHeadline: g("sp_head").value.trim(), splashSub: g("sp_sub").value.trim(), splashIcon: g("sp_img").value, splashVisual: g("sp_vis").value, bannerTop: { enabled: g("bt_on").checked, image: g("bt_img").value, link: g("bt_link").value.trim() }, bannerPopup: { enabled: g("bp_on").checked, image: g("bp_img").value, link: g("bp_link").value.trim(), seconds: Number(g("bp_sec").value) || 10 } }));
+        await Admin.guard(() => API.adminSaveSettings(Admin.token, { splashHeadline: g("sp_head").value.trim(), splashSub: g("sp_sub").value.trim(), splashKicker: g("sp_kicker").value.trim(), splashCta: g("sp_cta").value.trim() || "Register Now", splashIcon: g("sp_img").value, splashVisual: g("sp_vis").value,
+          splashTheme: { bg1: g("th_bg1").value, bg2: g("th_bg2").value, bg3: g("th_bg3").value, cta1: g("th_cta1").value, cta2: g("th_cta2").value, ctaText: g("th_ctatext").value, logoWidth: Number(g("th_logow").value) || 560, visualWidth: Number(g("th_visw").value) || 420, hideLogo: g("th_hidelogo").checked, hideVisual: g("th_hidevis").checked }, bannerTop: { enabled: g("bt_on").checked, image: g("bt_img").value, link: g("bt_link").value.trim() }, bannerPopup: { enabled: g("bp_on").checked, image: g("bp_img").value, link: g("bp_link").value.trim(), seconds: Number(g("bp_sec").value) || 10 } }));
         await Admin.refreshSettings(); toast("Appearance saved"); Admin.appearance(el);
       });
     },

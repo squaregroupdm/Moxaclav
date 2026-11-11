@@ -59,7 +59,7 @@ function default_settings(): array {
     return ['campaignName' => 'Battle of Interns', 'sponsor' => 'Moxaclav', 'durationSec' => 600, 'questionCount' => 25, 'shuffle' => true,
         'leaderboardPublic' => true, 'showExplanations' => true, 'registrationOpen' => true,
         'quizMode' => 'manual', 'quizOpen' => false, 'quizStartAt' => null, 'quizEndAt' => null,
-        'splashIcon' => '', 'splashVisual' => '', 'splashHeadline' => 'Battle of Interns', 'splashSub' => 'An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.',
+        'splashIcon' => '', 'splashVisual' => '', 'splashKicker' => 'World AMR Awareness Week · 18 to 24 November', 'splashCta' => 'Register Now', 'splashTheme' => [], 'splashHeadline' => 'Battle of Interns', 'splashSub' => 'An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.',
         'bannerTop' => ['enabled' => false, 'image' => '', 'link' => ''], 'bannerPopup' => ['enabled' => false, 'image' => '', 'link' => '', 'seconds' => 10],
         'terms' => default_terms()];
 }
@@ -113,7 +113,7 @@ function public_settings(): array {
     $qc = (int) setting('questionCount', 25); $ac = active_count();
     return ['campaignName' => setting('campaignName'), 'sponsor' => setting('sponsor'), 'durationSec' => (int) setting('durationSec', 600), 'questionCount' => $ac ? min($qc, $ac) : $qc,
         'leaderboardPublic' => (bool) setting('leaderboardPublic'), 'showExplanations' => setting('showExplanations', true) !== false, 'registrationOpen' => setting('registrationOpen', true) !== false,
-        'quiz' => quiz_state() + ['serverNow' => now_ms()], 'splash' => ['icon' => (string) setting('splashIcon', ''), 'visual' => (string) setting('splashVisual', ''), 'headline' => (string) setting('splashHeadline', 'Battle of Interns'), 'sub' => (string) setting('splashSub', '')],
+        'quiz' => quiz_state() + ['serverNow' => now_ms()], 'splash' => ['icon' => (string) setting('splashIcon', ''), 'visual' => (string) setting('splashVisual', ''), 'kicker' => (string) setting('splashKicker', 'World AMR Awareness Week · 18 to 24 November'), 'cta' => (string) setting('splashCta', 'Register Now'), 'theme' => (array) (setting('splashTheme') ?: []), 'headline' => (string) setting('splashHeadline', 'Battle of Interns'), 'sub' => (string) setting('splashSub', '')],
         'banners' => ['top' => setting('bannerTop') ?: default_settings()['bannerTop'], 'popup' => setting('bannerPopup') ?: default_settings()['bannerPopup']],
         'terms' => (string) setting('terms', default_terms()), 'institutions' => institutions(), 'demo' => false];
 }
@@ -436,10 +436,11 @@ switch ($route) {
     case 'admin/settings-save': {
         require_admin();
         $allowed = ['campaignName' => 'string', 'sponsor' => 'string', 'durationSec' => 'int', 'questionCount' => 'int', 'shuffle' => 'bool', 'leaderboardPublic' => 'bool', 'showExplanations' => 'bool', 'registrationOpen' => 'bool',
-            'quizMode' => 'string', 'quizOpen' => 'bool', 'quizStartAt' => 'int?', 'quizEndAt' => 'int?', 'splashIcon' => 'string', 'splashVisual' => 'string', 'splashHeadline' => 'string', 'splashSub' => 'text', 'terms' => 'text', 'bannerTop' => 'banner', 'bannerPopup' => 'banner'];
+            'quizMode' => 'string', 'quizOpen' => 'bool', 'quizStartAt' => 'int?', 'quizEndAt' => 'int?', 'splashIcon' => 'string', 'splashVisual' => 'string', 'splashKicker' => 'string', 'splashCta' => 'string', 'splashTheme' => 'theme', 'splashHeadline' => 'string', 'splashSub' => 'text', 'terms' => 'text', 'bannerTop' => 'banner', 'bannerPopup' => 'banner'];
         foreach ($allowed as $k => $type) {
             if (!array_key_exists($k, $in)) continue; $v = $in[$k];
             if ($type === 'string') $v = mb_substr(s($v), 0, 300); elseif ($type === 'text') $v = mb_substr(s($v), 0, 5000); elseif ($type === 'int') $v = max(1, (int) $v); elseif ($type === 'int?') $v = $v === null || $v === '' ? null : (int) $v;
+            elseif ($type === 'theme') { $v = (array) $v; $col = fn($x) => preg_match('/^#[0-9a-fA-F]{6}$/', (string) $x) ? strtolower((string) $x) : ''; $v = ['bg1' => $col($v['bg1'] ?? ''), 'bg2' => $col($v['bg2'] ?? ''), 'bg3' => $col($v['bg3'] ?? ''), 'cta1' => $col($v['cta1'] ?? ''), 'cta2' => $col($v['cta2'] ?? ''), 'ctaText' => $col($v['ctaText'] ?? ''), 'logoWidth' => max(200, min(900, (int) ($v['logoWidth'] ?? 560))), 'visualWidth' => max(200, min(900, (int) ($v['visualWidth'] ?? 420))), 'hideLogo' => !empty($v['hideLogo']), 'hideVisual' => !empty($v['hideVisual'])]; }
             elseif ($type === 'banner') { $v = (array) $v; $v = ['enabled' => !empty($v['enabled']), 'image' => mb_substr(s($v['image'] ?? ''), 0, 300), 'link' => mb_substr(s($v['link'] ?? ''), 0, 300), 'seconds' => max(3, min(60, (int) ($v['seconds'] ?? 10)))]; }
             else $v = (bool) $v;
             if ($k === 'quizMode' && !in_array($v, ['manual', 'scheduled'], true)) $v = 'manual';

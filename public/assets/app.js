@@ -136,15 +136,17 @@
     mount() {
       if (!document.querySelector(".bgart")) document.body.insertAdjacentHTML("afterbegin", BG_ART);
       const sp = settings.splash || {};
+      const th = sp.theme || {};
+      const vars = [["--sp-bg1", th.bg1], ["--sp-bg2", th.bg2], ["--sp-bg3", th.bg3], ["--sp-cta1", th.cta1], ["--sp-cta2", th.cta2], ["--sp-cta-text", th.ctaText], ["--sp-logo", th.logoWidth ? th.logoWidth + "px" : ""], ["--sp-visual", th.visualWidth ? th.visualWidth + "px" : ""]].filter(([, v]) => v).map(([k, v]) => `${k}:${esc(v)}`).join(";");
       $app.innerHTML = `
-        <div class="splash poster">
+        <div class="splash poster" style="${vars}">
           <div class="splash-bg"></div>
           <div class="splash-body">
-            <span class="splash-kicker">World AMR Awareness Week &middot; 18 to 24 November</span>
-            <img class="splash-logo" src="${esc(logoUrl())}" alt="${esc(sp.headline || settings.campaignName)}">
-            <p class="splash-sub">${esc(sp.sub || "")}</p>
-            <img class="splash-visual" src="${esc(visualUrl())}" alt="">
-            ${settings.registrationOpen ? `<a class="btn hero-cta gold" href="#register">Register Now</a>` : `<button class="btn hero-cta" disabled>Registration closed</button>`}
+            ${sp.kicker !== "" ? `<span class="splash-kicker">${esc(sp.kicker || "World AMR Awareness Week · 18 to 24 November")}</span>` : ""}
+            ${th.hideLogo ? `<h1>${esc(sp.headline || settings.campaignName)}</h1>` : `<img class="splash-logo" src="${esc(logoUrl())}" alt="${esc(sp.headline || settings.campaignName)}">`}
+            ${sp.sub ? `<p class="splash-sub">${esc(sp.sub)}</p>` : ""}
+            ${th.hideVisual ? "" : `<img class="splash-visual" src="${esc(visualUrl())}" alt="">`}
+            ${settings.registrationOpen ? `<a class="btn hero-cta gold" href="#register">${esc(sp.cta || "Register Now")}</a>` : `<button class="btn hero-cta" disabled>Registration closed</button>`}
             <p class="splash-login">Already registered? <a href="#login">Log in</a></p>
           </div>
           <div class="splash-foot">
@@ -664,12 +666,30 @@
 
     async appearance(el) {
       const s = await Admin.guard(() => API.adminSettings(Admin.token));
-      const top = s.bannerTop || {}, pop = s.bannerPopup || {};
-      const imgField = (id, url, kind, hint) => `<div class="stack-sm"><div id="${id}_prev">${url ? `<img class="img-preview" src="${esc(assetUrl(url))}" alt="">` : `<span class="small muted">No image yet.</span>`}</div><div class="row"><input type="file" class="input" id="${id}_file" accept=".png,.jpg,.jpeg,.webp,.gif" style="max-width:320px"><button class="btn sm" type="button" data-upload="${id}" data-kind="${kind}">Upload</button>${url ? `<button class="btn sm ghost" type="button" data-clear="${id}">Remove</button>` : ""}</div><input type="hidden" id="${id}" value="${esc(url || "")}"><span class="hint">${hint}</span></div>`;
+      const top = s.bannerTop || {}, pop = s.bannerPopup || {}, th = s.splashTheme || {};
+      const builtIn = { sp_img: DEFAULT_IMG.logo, sp_vis: DEFAULT_IMG.visual };
+      const imgField = (id, url, kind, hint) => `<div class="stack-sm"><div id="${id}_prev">${url ? `<img class="img-preview" src="${esc(assetUrl(url))}" alt="">` : builtIn[id] ? `<img class="img-preview" style="background:#123c8f;padding:8px" src="${esc(assetUrl(builtIn[id]))}" alt=""><span class="small muted">Built-in default in use.</span>` : `<span class="small muted">No image yet.</span>`}</div><div class="row"><input type="file" class="input" id="${id}_file" accept=".png,.jpg,.jpeg,.webp,.gif" style="max-width:320px"><button class="btn sm" type="button" data-upload="${id}" data-kind="${kind}">Upload</button>${url ? `<button class="btn sm ghost" type="button" data-clear="${id}">Remove</button>` : ""}</div><input type="hidden" id="${id}" value="${esc(url || "")}"><span class="hint">${hint}</span></div>`;
       el.innerHTML = `<div class="stack">
         <form class="card stack" id="apForm">
           <h2>Start screen</h2>
-          <div class="grid-2"><div class="field"><label for="sp_head">Headline (used as the logo's alt text and page name)</label><input class="input" id="sp_head" value="${esc(s.splashHeadline || "")}"></div><div class="field"><label for="sp_sub">Sub-line under the logo</label><input class="input" id="sp_sub" value="${esc(s.splashSub || "")}"></div></div>
+          <div class="grid-2">
+            <div class="field"><label for="sp_kicker">Small line above the logo</label><input class="input" id="sp_kicker" value="${esc(s.splashKicker ?? "World AMR Awareness Week · 18 to 24 November")}" placeholder="Leave empty to hide"></div>
+            <div class="field"><label for="sp_head">Headline (shown if the logo is hidden; also the page name)</label><input class="input" id="sp_head" value="${esc(s.splashHeadline || "")}"></div>
+            <div class="field"><label for="sp_sub">Sub-line under the logo</label><input class="input" id="sp_sub" value="${esc(s.splashSub || "")}" placeholder="Leave empty to hide"></div>
+            <div class="field"><label for="sp_cta">Button text</label><input class="input" id="sp_cta" value="${esc(s.splashCta || "Register Now")}"></div>
+          </div>
+          <div class="grid-4">
+            <div class="field"><label for="th_bg1">Background top</label><input class="input" type="color" id="th_bg1" value="${esc(th.bg1 || "#1d5fb8")}"></div>
+            <div class="field"><label for="th_bg2">Background middle</label><input class="input" type="color" id="th_bg2" value="${esc(th.bg2 || "#123c8f")}"></div>
+            <div class="field"><label for="th_bg3">Background bottom</label><input class="input" type="color" id="th_bg3" value="${esc(th.bg3 || "#0b2a6a")}"></div>
+            <div class="field"><label for="th_ctatext">Button text colour</label><input class="input" type="color" id="th_ctatext" value="${esc(th.ctaText || "#0b2a6a")}"></div>
+            <div class="field"><label for="th_cta1">Button colour (top)</label><input class="input" type="color" id="th_cta1" value="${esc(th.cta1 || "#ffd969")}"></div>
+            <div class="field"><label for="th_cta2">Button colour (bottom)</label><input class="input" type="color" id="th_cta2" value="${esc(th.cta2 || "#f5b72b")}"></div>
+            <div class="field"><label for="th_logow">Logo width (px, desktop)</label><input class="input" type="number" id="th_logow" min="200" max="900" value="${esc(th.logoWidth || 560)}"></div>
+            <div class="field"><label for="th_visw">Key visual width (px, desktop)</label><input class="input" type="number" id="th_visw" min="200" max="900" value="${esc(th.visualWidth || 420)}"></div>
+          </div>
+          <div class="row"><label class="check"><input type="checkbox" id="th_hidelogo" ${th.hideLogo ? "checked" : ""}><span>Hide the logo and show the headline as text instead</span></label><label class="check"><input type="checkbox" id="th_hidevis" ${th.hideVisual ? "checked" : ""}><span>Hide the key visual</span></label></div>
+          <div class="row"><button class="btn sm" type="button" id="th_reset">Reset colours and sizes to the poster defaults</button></div>
           <div class="field"><label>Campaign logo</label>${imgField("sp_img", s.splashIcon, "splash", "Shown at the top of the start screen and on the registration page. PNG with a transparent background, about 1200 x 680 px, under 1 MB. Leave empty to use the built-in AMR Avengers logo.")}</div>
           <div class="field"><label>Key visual (below the sub-line)</label>${imgField("sp_vis", s.splashVisual, "splash", "The shield-and-capsule picture. PNG with soft or transparent edges, about 800 x 600 px, under 1 MB. Leave empty to use the built-in one.")}</div>
           <h2>Top banner</h2>
@@ -689,10 +709,12 @@
         catch (ex) { toast(ex.message); }
         b.disabled = false; b.textContent = "Upload";
       }));
-      el.querySelectorAll("[data-clear]").forEach((b) => b.addEventListener("click", () => { const id = b.dataset.clear; el.querySelector("#" + id).value = ""; el.querySelector("#" + id + "_prev").innerHTML = `<span class="small muted">Removed. Press Save appearance to apply.</span>`; }));
+      el.querySelector("#th_reset").addEventListener("click", () => { const d = { th_bg1: "#1d5fb8", th_bg2: "#123c8f", th_bg3: "#0b2a6a", th_cta1: "#ffd969", th_cta2: "#f5b72b", th_ctatext: "#0b2a6a", th_logow: 560, th_visw: 420 }; Object.entries(d).forEach(([k, v]) => { el.querySelector("#" + k).value = v; }); el.querySelector("#th_hidelogo").checked = false; el.querySelector("#th_hidevis").checked = false; toast("Defaults restored. Press Save appearance to apply."); });
+      el.querySelectorAll("[data-clear]").forEach((b) => b.addEventListener("click", () => { const id = b.dataset.clear; el.querySelector("#" + id).value = ""; el.querySelector("#" + id + "_prev").innerHTML = `<span class="small muted">Removed${builtIn[id] ? ", the built-in default will be used" : ""}. Press Save appearance to apply.</span>`; }));
       document.getElementById("apForm").addEventListener("submit", async (e) => {
         e.preventDefault(); const g = (id) => el.querySelector("#" + id);
-        await Admin.guard(() => API.adminSaveSettings(Admin.token, { splashHeadline: g("sp_head").value.trim(), splashSub: g("sp_sub").value.trim(), splashIcon: g("sp_img").value, splashVisual: g("sp_vis").value, bannerTop: { enabled: g("bt_on").checked, image: g("bt_img").value, link: g("bt_link").value.trim() }, bannerPopup: { enabled: g("bp_on").checked, image: g("bp_img").value, link: g("bp_link").value.trim(), seconds: Number(g("bp_sec").value) || 10 } }));
+        await Admin.guard(() => API.adminSaveSettings(Admin.token, { splashHeadline: g("sp_head").value.trim(), splashSub: g("sp_sub").value.trim(), splashKicker: g("sp_kicker").value.trim(), splashCta: g("sp_cta").value.trim() || "Register Now", splashIcon: g("sp_img").value, splashVisual: g("sp_vis").value,
+          splashTheme: { bg1: g("th_bg1").value, bg2: g("th_bg2").value, bg3: g("th_bg3").value, cta1: g("th_cta1").value, cta2: g("th_cta2").value, ctaText: g("th_ctatext").value, logoWidth: Number(g("th_logow").value) || 560, visualWidth: Number(g("th_visw").value) || 420, hideLogo: g("th_hidelogo").checked, hideVisual: g("th_hidevis").checked }, bannerTop: { enabled: g("bt_on").checked, image: g("bt_img").value, link: g("bt_link").value.trim() }, bannerPopup: { enabled: g("bp_on").checked, image: g("bp_img").value, link: g("bp_link").value.trim(), seconds: Number(g("bp_sec").value) || 10 } }));
         await Admin.refreshSettings(); toast("Appearance saved"); Admin.appearance(el);
       });
     },
