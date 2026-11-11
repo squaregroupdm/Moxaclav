@@ -97,7 +97,7 @@
     const top = settings.banners && settings.banners.top;
     $app.innerHTML = `
       <header class="topbar"><div class="topbar-in">
-        <a class="brand" href="#" style="text-decoration:none;color:inherit"><span class="brand-name">${esc(settings.campaignName)}</span><span class="brand-sub">${esc(settings.sponsor)} &middot; World AMR Awareness Week</span></a>
+        <a class="brand" href="#" title="${esc(settings.campaignName)}"><span class="logo-badge"><img src="${esc(logoUrl())}" alt="${esc(settings.campaignName)}"></span><span class="brand-sub">World AMR Awareness Week</span></a>
         ${right}
       </div></header>
       ${banner && top && top.enabled && top.image ? `<div class="banner-top">${top.link ? `<a href="${esc(top.link)}" target="_blank" rel="noopener">` : ""}<img src="${esc(assetUrl(top.image))}" alt="">${top.link ? "</a>" : ""}</div>` : ""}
@@ -184,7 +184,7 @@
       if (token()) { location.hash = ""; return; }
       shell(`
         <div class="stack">
-          <div class="hero"><div class="hero-text"><span class="eyebrow">Registration</span><h1>Create your account</h1><p class="muted">Register once now. On quiz day you log in with your mobile number and a password you cannot forget.</p></div>${splashIcon()}</div>
+          <div class="hero"><div class="hero-text"><span class="eyebrow">Registration</span><h1>Create your account</h1><p class="muted">Register once now. On quiz day you log in with your mobile number and a password you cannot forget.</p></div>${HERO_ART}</div>
           ${settings.registrationOpen ? `
           <form class="card stack" id="regForm" novalidate>
             ${err ? `<div class="alert bad">${esc(err)}</div>` : ""}
