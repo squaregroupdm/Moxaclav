@@ -388,6 +388,12 @@ switch ($route) {
         foreach (db()->query(PARTICIPANT_SQL . ' ORDER BY a.score DESC, a.time_taken_sec ASC, p.registered_at ASC') as $r) { $csv .= csv_line_raw([$r['status'] === 'completed' ? rank_of($r['aid']) : '', $r['name'], csv_phone($r['phone']), $r['bmdc'], $r['email'], $r['institution'], csv_phone((string) ($r['birth_day'] ?? '')), $r['in_base'] ? 'yes' : 'no', gmdate('c', (int) ($r['registered_at'] / 1000)), $r['status'] ?: 'registered', $r['score'] ?? '', $r['total'] ?? '', $r['time_taken_sec'] ?? '', $r['tab_switches'] ?? 0, !empty($r['late']) ? 'yes' : '', $r['submitted_at'] ? gmdate('c', (int) ($r['submitted_at'] / 1000)) : '']); }
         out(['filename' => "battle-of-interns-participants-$stamp.csv", 'csv' => $csv]);
     }
+    case 'admin/ranking': {
+        require_admin(); $rows = []; $i = 0;
+        $q = db()->query("SELECT a.score, a.total, a.time_taken_sec, a.submitted_at, a.late, a.tab_switches, p.name, p.phone, p.bmdc, p.email, p.institution, (SELECT 1 FROM sms_base b WHERE b.phone=p.phone) in_base FROM attempts a JOIN participants p ON p.id=a.participant_id WHERE a.status='completed' ORDER BY a.score DESC, a.time_taken_sec ASC, a.submitted_at ASC");
+        foreach ($q as $r) { $i++; $rows[] = ['rank' => $i, 'name' => $r['name'], 'phone' => $r['phone'], 'bmdc' => $r['bmdc'], 'email' => $r['email'], 'institution' => $r['institution'], 'score' => (int) $r['score'], 'total' => (int) $r['total'], 'timeTakenSec' => (int) $r['time_taken_sec'], 'submittedAt' => (int) $r['submitted_at'], 'late' => (bool) $r['late'], 'tabSwitches' => (int) $r['tab_switches'], 'inBase' => (bool) $r['in_base']]; }
+        out(['rows' => $rows, 'leaderboardPublic' => (bool) setting('leaderboardPublic')]);
+    }
     case 'admin/institutions': { require_admin(); out(institutions()); }
     case 'admin/institutions-save': {
         require_admin(); $list = $in['institutions'] ?? null;

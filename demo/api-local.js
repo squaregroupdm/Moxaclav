@@ -184,6 +184,7 @@ window.BOI_API = (function () {
       db.participants.forEach((p) => { const r = pRow(db, p); rows.push([rankOf(p), r.name, csvPhone(r.phone), r.bmdc, r.email, r.institution, csvPhone(r.birthDay), r.inBase ? "yes" : "no", new Date(r.registeredAt).toISOString(), r.status, r.score ?? "", r.total ?? "", r.timeTakenSec ?? "", r.tabSwitches, "", r.submittedAt ? new Date(r.submittedAt).toISOString() : ""]); });
       return { filename: `battle-of-interns-participants-${stamp}.csv`, csv: csv(rows) };
     },
+    async adminRanking(t) { const db = load(); adminCheck(db, t); return delay({ rows: ranked(db).map((x) => ({ rank: x.rank, name: x.p.name, phone: x.p.phone, bmdc: x.p.bmdc, email: x.p.email, institution: x.p.institution, score: x.a.score, total: x.a.total, timeTakenSec: x.a.timeTakenSec, submittedAt: x.a.submittedAt, late: false, tabSwitches: x.a.tabSwitches, inBase: db.smsBase.includes(x.p.phone) })), leaderboardPublic: db.settings.leaderboardPublic }); },
     async adminInstitutions(t) { const db = load(); adminCheck(db, t); return delay(sortedInst(db.institutions || [])); },
     async adminSaveInstitutions(t, list) { const db = load(); adminCheck(db, t); db.institutions = list === null ? (window.BOI_SEED_INSTITUTIONS || []).slice() : list.map((x) => String(x).trim()).filter(Boolean); save(db); return { ok: true }; },
     async adminMaterials(t) { const db = load(); adminCheck(db, t); return delay(db.materials.slice()); },

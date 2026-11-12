@@ -483,7 +483,7 @@
       try { return await fn(); } catch (e) { if (/unauthori[sz]ed|sign in/i.test(e.message)) { Admin.token = null; session.del("boi_admin"); Admin.login("Session expired. Sign in again."); } else toast(e.message); throw e; }
     },
     render() {
-      const tabs = [["overview", "Overview"], ["questions", "Questions"], ["participants", "Participants"], ["materials", "Study materials"], ["appearance", "Splash & banners"], ["smsbase", "SMS base"], ["colleges", "Medical colleges"], ["settings", "Settings"]];
+      const tabs = [["overview", "Overview"], ["ranking", "Ranking"], ["questions", "Questions"], ["participants", "Participants"], ["materials", "Study materials"], ["appearance", "Splash & banners"], ["smsbase", "SMS base"], ["colleges", "Medical colleges"], ["settings", "Settings"]];
       shell(`<div class="stack">
         <div class="row between"><div><span class="eyebrow">Admin panel</span><h1>Campaign control</h1></div><div class="row"><a class="btn sm" href="#" target="_blank">View site</a><button class="btn sm ghost" id="btnLogout">Sign out</button></div></div>
         <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${Admin.tab === k ? "active" : ""}" data-t="${k}">${l}</button>`).join("")}</div>
@@ -523,6 +523,34 @@
       const bo = document.getElementById("btnOpen"), bc = document.getElementById("btnClose");
       if (bo) bo.addEventListener("click", async () => { if (await confirmBox({ title: "Open the quiz now?", body: "Every registered doctor will see the Start button immediately.", okText: "Open quiz" })) setOpen(true); });
       if (bc) bc.addEventListener("click", async () => { if (await confirmBox({ title: "Close the quiz?", body: "New attempts will be blocked. Doctors mid-quiz can still finish.", okText: "Close quiz", danger: true })) setOpen(false); });
+    },
+
+    async ranking(el) {
+      const r = await Admin.guard(() => API.adminRanking(Admin.token));
+      el.innerHTML = `<div class="stack">
+        <div class="row between"><div><h2>Ranking: ${r.rows.length} finished</h2><span class="small muted">Highest score, then faster completion time, then earlier submission. This view is always available to admin.</span></div>
+          <div class="row"><span class="pill ${r.leaderboardPublic ? "good" : "warn"}">${r.leaderboardPublic ? "Visible to participants" : "Hidden from participants"}</span><button class="btn sm" id="rkToggle">${r.leaderboardPublic ? "Hide from participants" : "Show to participants"}</button><button class="btn sm primary" id="rkXlsx">Download Excel</button><button class="btn sm" id="rkCsv">Download CSV</button></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Rank</th><th>Name</th><th>Phone</th><th>BMDC</th><th>College</th><th>Score</th><th>Time</th><th>Submitted</th><th>Flags</th></tr></thead><tbody>
+          ${r.rows.length ? r.rows.map((x) => `<tr><td class="num"><b>${x.rank}</b></td><td>${esc(x.name)}</td><td class="num mono">${esc(x.phone)}</td><td class="num">${esc(x.bmdc || "")}</td><td class="small">${esc(x.institution || "")}</td><td class="num"><b>${x.score}</b>/${x.total}</td><td class="num">${mmss(x.timeTakenSec)}</td><td class="small num">${fmtDate(x.submittedAt)}</td><td>${x.late ? '<span class="pill bad">late</span> ' : ""}${x.tabSwitches > 3 ? `<span class="pill warn">${x.tabSwitches} tab switches</span> ` : ""}${x.inBase ? "" : '<span class="pill">outside SMS base</span>'}</td></tr>`).join("") : `<tr><td colspan="9" class="muted">No one has finished yet.</td></tr>`}
+        </tbody></table></div></div>`;
+      document.getElementById("rkToggle").addEventListener("click", async () => { await Admin.guard(() => API.adminSaveSettings(Admin.token, { leaderboardPublic: !r.leaderboardPublic })); await Admin.refreshSettings(); toast(r.leaderboardPublic ? "Ranking hidden from participants" : "Ranking now visible to participants"); Admin.ranking(el); });
+      const head = ["Rank", "Name", "Phone", "BMDC", "Email", "Medical college", "Score", "Total", "Time (mm:ss)", "Time (seconds)", "Submitted at", "Late submission", "Tab switches", "In SMS base"];
+      const rows = r.rows.map((x) => [x.rank, x.name, x.phone, x.bmdc || "", x.email, x.institution || "", x.score, x.total, mmss(x.timeTakenSec), x.timeTakenSec, fmtDate(x.submittedAt), x.late ? "yes" : "", x.tabSwitches, x.inBase ? "yes" : "no"]);
+      const stamp = new Date().toISOString().slice(0, 10);
+      document.getElementById("rkXlsx").addEventListener("click", async () => {
+        try {
+          await Admin.loadXlsx();
+          const ws = window.XLSX.utils.aoa_to_sheet([head, ...rows]);
+          rows.forEach((_, i) => { const c = ws[window.XLSX.utils.encode_cell({ r: i + 1, c: 2 })]; if (c) c.t = "s"; }); // phone stays text
+          ws["!cols"] = [6, 28, 14, 12, 26, 34, 7, 7, 12, 12, 20, 8, 8, 8].map((w) => ({ wch: w }));
+          const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "Ranking");
+          const out = window.XLSX.write(wb, { bookType: "xlsx", type: "array" });
+          Admin.download(`ranking-${stamp}.xlsx`, new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+        } catch (ex) { toast(ex.message); }
+      });
+      document.getElementById("rkCsv").addEventListener("click", () => { const cell = (v, i) => i === 2 ? '="' + v + '"' : /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v); Admin.download(`ranking-${stamp}.csv`, [head, ...rows].map((r) => r.map(cell).join(",")).join("\r\n"), "text/csv"); });
+    },
+    loadXlsx() { if (window.XLSX) return Promise.resolve(); return new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; sc.onload = res; sc.onerror = () => rej(new Error("Could not load the Excel writer. Use Download CSV instead.")); document.head.appendChild(sc); });
     },
 
     async questions(el) {
@@ -760,7 +788,7 @@
         return rows.map((r) => String(r[col] ?? "").trim()).filter(Boolean);
       };
       if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
-        if (!window.XLSX) await new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; sc.onload = res; sc.onerror = () => rej(new Error("Could not load the Excel reader. Save the file as CSV and try again.")); document.head.appendChild(sc); });
+        await Admin.loadXlsx();
         const buf = await f.arrayBuffer(); const wb = window.XLSX.read(buf, { type: "array" }); const ws = wb.Sheets[wb.SheetNames[0]];
         return pick(window.XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: "" }));
       }
@@ -835,9 +863,10 @@
       document.getElementById("btnReset").addEventListener("click", async () => { if (await confirmBox({ title: "Delete all participants?", body: "Accounts, answers and rankings are deleted. This cannot be undone. Export first if you need the data.", okText: "Delete everything", danger: true })) { await Admin.guard(() => API.adminReset(Admin.token)); store.del("boi_token"); toast("Participants deleted"); Admin.tab = "overview"; Admin.render(); } });
     },
 
-    async download(filename, text, type) {
-      try { if (window.claude && window.claude.use) { const dl = await window.claude.use("downloads"); if (dl) { await dl.save({ filename, data: new Blob([text], { type }) }); return; } } } catch (e) { /* viewer declined; fall through */ }
-      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    async download(filename, data, type) {
+      const blob = data instanceof Blob ? data : new Blob([data], { type });
+      try { if (window.claude && window.claude.use) { const dl = await window.claude.use("downloads"); if (dl) { await dl.save({ filename, data: blob }); return; } } } catch (e) { /* viewer declined; fall through */ }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     },
   };

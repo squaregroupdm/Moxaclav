@@ -37,6 +37,7 @@ There is no link to the admin panel on the participant pages on purpose. Open it
 | Tab | What you can do |
 |---|---|
 | Overview | Quiz access status with one-click Open / Close. Registered, completed, in progress, average score and time, SMS-base coverage. Per-question accuracy bars. |
+| Ranking | Full ranking of everyone who finished (not just the top 50), visible to admin even when hidden from participants, with a one-click show/hide toggle. Download as Excel (.xlsx, phone numbers kept as text) or CSV. |
 | Questions | Add, edit, hide or delete questions. Import from `.json` or `.csv` (append or replace all). Export all questions as JSON. |
 | Participants | Search by name, BMDC, phone, email or college. Password column (birth day + last 4) to remind a doctor by phone. "In base / outside" badge against the SMS base. View a participant's answer sheet, set a new password, reset their attempt, or remove them. Export participants CSV and the full answers CSV. Phone numbers are exported as 11-digit text (Excel keeps the leading zero). |
 | Study materials | Upload files (PDF, Excel, Word, PowerPoint, images) or add links; title, description, visible/hidden, reorder. |
@@ -47,6 +48,7 @@ There is no link to the admin panel on the participant pages on purpose. Open it
 
 ---|---|
 | Overview | Registered, completed, average score, average time. Per-question accuracy bars (find the hardest questions). |
+| Ranking | Full ranking of everyone who finished (not just the top 50), visible to admin even when hidden from participants, with a one-click show/hide toggle. Download as Excel (.xlsx, phone numbers kept as text) or CSV. |
 | Questions | Add, edit, hide or delete questions. Import from `.json` or `.csv` (append or replace all). Export all questions as JSON. |
 | Medical colleges | Add or remove colleges from the registration drop-down, filter the list, or restore the built-in list of 112 (`seed/institutions.json`). |
 | Participants | Search by name, BMDC, phone, email or institution. View a participant's full answer sheet. Remove a participant (frees their BMDC number to retake). Export participants CSV (with rank, score, time, tab switches, late flag) and a full answers CSV (one row per question per participant). |
@@ -139,7 +141,7 @@ All routes: `POST api/index.php?r=<route>` with a JSON body, JSON reply. Errors 
 | `leaderboard` | token (optional) | top 50 + own row |
 | `admin/login` | password | `{adminToken}` (valid 8 h) |
 | `admin/upload` | multipart: kind (materials/banners/splash), file | `{url, size, type}` |
-| `admin/stats`, `admin/questions`, `admin/question-save`, `admin/question-delete`, `admin/question-import`, `admin/participants`, `admin/participant-answers`, `admin/participant-delete`, `admin/participant-password`, `admin/participant-reset-attempt`, `admin/export` (kind: participants, answers, smsmatch), `admin/institutions`, `admin/institutions-save`, `admin/materials`, `admin/material-save`, `admin/material-delete`, `admin/material-order`, `admin/smsbase-upload`, `admin/smsbase-stats`, `admin/smsbase-clear`, `admin/settings`, `admin/settings-save`, `admin/password`, `admin/reset`, `admin/reset-attempts` | see `assets/api-remote.js` | |
+| `admin/stats`, `admin/questions`, `admin/question-save`, `admin/question-delete`, `admin/question-import`, `admin/participants`, `admin/participant-answers`, `admin/participant-delete`, `admin/participant-password`, `admin/participant-reset-attempt`, `admin/ranking`, `admin/export` (kind: participants, answers, smsmatch), `admin/institutions`, `admin/institutions-save`, `admin/materials`, `admin/material-save`, `admin/material-delete`, `admin/material-order`, `admin/smsbase-upload`, `admin/smsbase-stats`, `admin/smsbase-clear`, `admin/settings`, `admin/settings-save`, `admin/password`, `admin/reset`, `admin/reset-attempts` | see `assets/api-remote.js` | |
 
 Database tables: `settings`, `questions`, `participants` (with password hash), `attempts` (one per participant; answers stored as JSON), `materials`, `sms_base`. Created automatically in `api/index.php`; an older database is upgraded in place.
 

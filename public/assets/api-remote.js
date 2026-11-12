@@ -50,6 +50,7 @@ window.BOI_API = (function () {
     adminSetParticipantPassword: (t, id, newPassword) => call("admin/participant-password", { id, newPassword }, t),
     adminResetParticipantAttempt: (t, id) => call("admin/participant-reset-attempt", { id }, t),
     adminExport: (t, kind) => call("admin/export", { kind }, t),
+    adminRanking: (t) => call("admin/ranking", {}, t),
     adminInstitutions: (t) => call("admin/institutions", {}, t),
     adminSaveInstitutions: (t, list) => call("admin/institutions-save", { institutions: list }, t),
     adminMaterials: (t) => call("admin/materials", {}, t),
