@@ -142,7 +142,7 @@
         <div class="splash poster" style="${vars}">
           <div class="splash-bg"></div>
           <div class="splash-body">
-            ${sp.kicker !== "" ? `<span class="splash-kicker">${esc(sp.kicker || "World AMR Awareness Week · 18 to 24 November")}</span>` : ""}
+            ${sp.kicker !== "" ? `<span class="splash-kicker">${esc(sp.kicker || "World AMR Awareness Week")}</span>` : ""}
             ${th.hideLogo ? `<h1>${esc(sp.headline || settings.campaignName)}</h1>` : `<img class="splash-logo" src="${esc(logoUrl())}" alt="${esc(sp.headline || settings.campaignName)}">`}
             ${sp.sub ? `<p class="splash-sub">${esc(sp.sub)}</p>` : ""}
             ${th.hideVisual ? "" : `<img class="splash-visual" src="${esc(visualUrl())}" alt="">`}
@@ -701,7 +701,7 @@
         <form class="card stack" id="apForm">
           <h2>Start screen</h2>
           <div class="grid-2">
-            <div class="field"><label for="sp_kicker">Small line above the logo</label><input class="input" id="sp_kicker" value="${esc(s.splashKicker ?? "World AMR Awareness Week · 18 to 24 November")}" placeholder="Leave empty to hide"></div>
+            <div class="field"><label for="sp_kicker">Small line above the logo</label><input class="input" id="sp_kicker" value="${esc(s.splashKicker ?? "World AMR Awareness Week")}" placeholder="Leave empty to hide"></div>
             <div class="field"><label for="sp_head">Headline (shown if the logo is hidden; also the page name)</label><input class="input" id="sp_head" value="${esc(s.splashHeadline || "")}"></div>
             <div class="field"><label for="sp_sub">Sub-line under the logo</label><input class="input" id="sp_sub" value="${esc(s.splashSub || "")}" placeholder="Leave empty to hide"></div>
             <div class="field"><label for="sp_cta">Button text</label><input class="input" id="sp_cta" value="${esc(s.splashCta || "Register Now")}"></div>

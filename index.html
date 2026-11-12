@@ -401,7 +401,7 @@ body.splash-mode .bgart { color: #9fd3ff; opacity: 0.22; }
    localStorage. Used only for the standalone demo page. Nothing is sent anywhere. */
 window.BOI_API = (function () {
   "use strict";
-  const KEY = "boi_demo_v5";
+  const KEY = "boi_demo_v6";
   const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   const delay = (v) => new Promise((r) => setTimeout(() => r(v), 120));
   const fail = (m) => { throw new Error(m); };
@@ -411,7 +411,7 @@ window.BOI_API = (function () {
   const DEFAULT_TERMS = "1. Participation is open exclusively to medical doctors currently serving as interns in recognized medical colleges or hospitals in Bangladesh.\n2. Each participant can register and participate only once.\n3. The quiz must be completed within the stipulated time using a personal internet-enabled device.\n4. Winners will be selected based on scores and completion time. The organizer's decision will be final.\n5. The organizer reserves the right to disqualify participants for unfair practices and modify or cancel the campaign if necessary.";
   const defaultSettings = () => ({ campaignName: "Battle of Interns", sponsor: "Moxaclav", durationSec: 600, questionCount: 25, shuffle: true, leaderboardPublic: true, showExplanations: true, registrationOpen: true,
     quizMode: "manual", quizOpen: true, quizStartAt: null, quizEndAt: null,
-    splashIcon: "", splashVisual: "", splashKicker: "World AMR Awareness Week · 18 to 24 November", splashCta: "Register Now", splashTheme: {}, splashHeadline: "Battle of Interns", splashSub: "An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.",
+    splashIcon: "", splashVisual: "", splashKicker: "World AMR Awareness Week", splashCta: "Register Now", splashTheme: {}, splashHeadline: "Battle of Interns", splashSub: "An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week.",
     bannerTop: { enabled: false, image: "", link: "" }, bannerPopup: { enabled: false, image: "", link: "", seconds: 10 }, terms: DEFAULT_TERMS });
   const seedMaterials = () => (window.BOI_SEED_MATERIALS || []).map((m, i) => ({ id: "m" + (i + 1), title: m.title, description: m.description || "", url: m.url || ((window.BOI_ASSET_BASE || "") + "materials/" + m.file), type: m.type || "link", size: m.size || null, visible: true, createdAt: Date.now() }));
 
@@ -762,7 +762,7 @@ window.BOI_API = (function () {
         <div class="splash poster" style="${vars}">
           <div class="splash-bg"></div>
           <div class="splash-body">
-            ${sp.kicker !== "" ? `<span class="splash-kicker">${esc(sp.kicker || "World AMR Awareness Week · 18 to 24 November")}</span>` : ""}
+            ${sp.kicker !== "" ? `<span class="splash-kicker">${esc(sp.kicker || "World AMR Awareness Week")}</span>` : ""}
             ${th.hideLogo ? `<h1>${esc(sp.headline || settings.campaignName)}</h1>` : `<img class="splash-logo" src="${esc(logoUrl())}" alt="${esc(sp.headline || settings.campaignName)}">`}
             ${sp.sub ? `<p class="splash-sub">${esc(sp.sub)}</p>` : ""}
             ${th.hideVisual ? "" : `<img class="splash-visual" src="${esc(visualUrl())}" alt="">`}
@@ -1321,7 +1321,7 @@ window.BOI_API = (function () {
         <form class="card stack" id="apForm">
           <h2>Start screen</h2>
           <div class="grid-2">
-            <div class="field"><label for="sp_kicker">Small line above the logo</label><input class="input" id="sp_kicker" value="${esc(s.splashKicker ?? "World AMR Awareness Week · 18 to 24 November")}" placeholder="Leave empty to hide"></div>
+            <div class="field"><label for="sp_kicker">Small line above the logo</label><input class="input" id="sp_kicker" value="${esc(s.splashKicker ?? "World AMR Awareness Week")}" placeholder="Leave empty to hide"></div>
             <div class="field"><label for="sp_head">Headline (shown if the logo is hidden; also the page name)</label><input class="input" id="sp_head" value="${esc(s.splashHeadline || "")}"></div>
             <div class="field"><label for="sp_sub">Sub-line under the logo</label><input class="input" id="sp_sub" value="${esc(s.splashSub || "")}" placeholder="Leave empty to hide"></div>
             <div class="field"><label for="sp_cta">Button text</label><input class="input" id="sp_cta" value="${esc(s.splashCta || "Register Now")}"></div>

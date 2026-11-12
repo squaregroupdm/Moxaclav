@@ -59,7 +59,7 @@ function default_settings(): array {
     return ['campaignName' => 'Battle of Interns', 'sponsor' => 'Moxaclav', 'durationSec' => 600, 'questionCount' => 25, 'shuffle' => true,
         'leaderboardPublic' => true, 'showExplanations' => true, 'registrationOpen' => true,
         'quizMode' => 'manual', 'quizOpen' => false, 'quizStartAt' => null, 'quizEndAt' => null,
-        'splashIcon' => '', 'splashVisual' => '', 'splashKicker' => 'World AMR Awareness Week · 18 to 24 November', 'splashCta' => 'Register Now', 'splashTheme' => [], 'splashHeadline' => 'Battle of Interns', 'splashSub' => 'An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week, 18 to 24 November.',
+        'splashIcon' => '', 'splashVisual' => '', 'splashKicker' => 'World AMR Awareness Week', 'splashCta' => 'Register Now', 'splashTheme' => [], 'splashHeadline' => 'Battle of Interns', 'splashSub' => 'An online quiz on rational antimicrobial use for intern doctors of Bangladesh. World AMR Awareness Week.',
         'bannerTop' => ['enabled' => false, 'image' => '', 'link' => ''], 'bannerPopup' => ['enabled' => false, 'image' => '', 'link' => '', 'seconds' => 10],
         'terms' => default_terms()];
 }
@@ -113,7 +113,7 @@ function public_settings(): array {
     $qc = (int) setting('questionCount', 25); $ac = active_count();
     return ['campaignName' => setting('campaignName'), 'sponsor' => setting('sponsor'), 'durationSec' => (int) setting('durationSec', 600), 'questionCount' => $ac ? min($qc, $ac) : $qc,
         'leaderboardPublic' => (bool) setting('leaderboardPublic'), 'showExplanations' => setting('showExplanations', true) !== false, 'registrationOpen' => setting('registrationOpen', true) !== false,
-        'quiz' => quiz_state() + ['serverNow' => now_ms()], 'splash' => ['icon' => (string) setting('splashIcon', ''), 'visual' => (string) setting('splashVisual', ''), 'kicker' => (string) setting('splashKicker', 'World AMR Awareness Week · 18 to 24 November'), 'cta' => (string) setting('splashCta', 'Register Now'), 'theme' => (array) (setting('splashTheme') ?: []), 'headline' => (string) setting('splashHeadline', 'Battle of Interns'), 'sub' => (string) setting('splashSub', '')],
+        'quiz' => quiz_state() + ['serverNow' => now_ms()], 'splash' => ['icon' => (string) setting('splashIcon', ''), 'visual' => (string) setting('splashVisual', ''), 'kicker' => (string) setting('splashKicker', 'World AMR Awareness Week'), 'cta' => (string) setting('splashCta', 'Register Now'), 'theme' => (array) (setting('splashTheme') ?: []), 'headline' => (string) setting('splashHeadline', 'Battle of Interns'), 'sub' => (string) setting('splashSub', '')],
         'banners' => ['top' => setting('bannerTop') ?: default_settings()['bannerTop'], 'popup' => setting('bannerPopup') ?: default_settings()['bannerPopup']],
         'terms' => (string) setting('terms', default_terms()), 'institutions' => institutions(), 'demo' => false];
 }
